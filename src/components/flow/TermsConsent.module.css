@@ -33,6 +33,31 @@
   margin: 0 0 var(--space-md) 0;
 }
 
+.facilitySection {
+  margin-bottom: var(--space-lg);
+  animation: fadeIn var(--transition-normal);
+}
+
+.facilityInfoText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+  line-height: 1.5;
+}
+
+.manualFacilityId {
+  margin-top: var(--space-md);
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--color-border);
+  animation: fadeIn var(--transition-normal);
+}
+
+.helperText {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
+}
+
 .checkboxLabel {
   display: flex;
   align-items: flex-start;

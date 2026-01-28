@@ -183,6 +183,35 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
       <div className={styles.additionalDetailsWrapper}>
         {selectedAddress?.type === 'LGH' && (
           <div className={styles.apartmentFields}>
+            {/* c/o toggle and field moved here */}
+            {!showCo ? (
+              <button 
+                className={styles.toggleCo}
+                onClick={() => setShowCo(true)}
+              >
+                + Lägg till c/o
+              </button>
+            ) : (
+              <div className={styles.coRow}>
+                <Input
+                  label="c/o (valfritt)"
+                  placeholder="c/o namn"
+                  value={coValue}
+                  onChange={(e) => setCoValue(e.target.value)}
+                  className={styles.coInput}
+                />
+                <button 
+                  className={styles.removeCo}
+                  onClick={() => {
+                    setShowCo(false);
+                    setCoValue('');
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             <p className={styles.sectionLabel}>Välj lägenhetsnummer</p>
             
             {isAptsLoading ? (
@@ -239,35 +268,6 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
                   className={styles.aptInput}
                   autoFocus
                 />
-              </div>
-            )}
-
-            {/* c/o toggle and field */}
-            {!showCo ? (
-              <button 
-                className={styles.toggleCo}
-                onClick={() => setShowCo(true)}
-              >
-                + Lägg till c/o
-              </button>
-            ) : (
-              <div className={styles.coRow}>
-                <Input
-                  label="c/o (valfritt)"
-                  placeholder="c/o namn"
-                  value={coValue}
-                  onChange={(e) => setCoValue(e.target.value)}
-                  className={styles.coInput}
-                />
-                <button 
-                  className={styles.removeCo}
-                  onClick={() => {
-                    setShowCo(false);
-                    setCoValue('');
-                  }}
-                >
-                  ✕
-                </button>
               </div>
             )}
           </div>

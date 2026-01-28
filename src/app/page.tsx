@@ -91,12 +91,26 @@ const FlowContent = () => {
 
   const handleProductSelect = (product: Product) => {
     selectProduct(product);
-    goToStep('ADDRESS_SEARCH');
+    
+    if (state.valdAdress) {
+      // If we already have an address (e.g., coming from GENERIC flow), go to IDENTIFY
+      goToStep('IDENTIFY');
+    } else {
+      // Normal flow: Choose product, then address
+      goToStep('ADDRESS_SEARCH');
+    }
   };
 
   const handleAddressConfirm = (address: Address, apartmentDetails?: { number: string, co?: string }) => {
     setAddress(address, apartmentDetails ? { number: apartmentDetails.number, co: apartmentDetails.co || null } : undefined);
-    goToStep('IDENTIFY');
+    
+    if (state.selectedProduct?.id === 'GENERIC') {
+      // If user chose "Teckna elavtal" (unspecified), show product selection now
+      goToStep('PRODUCT_SELECT');
+    } else {
+      // Normal flow: Go to IDENTIFY
+      goToStep('IDENTIFY');
+    }
   };
 
   const handleAuthenticated = async (pnr: string, method: IdMethod) => {
@@ -169,11 +183,19 @@ const FlowContent = () => {
     }
   };
 
-  const handleTermsConfirm = (consents: { termsAccepted: boolean; marketing: { email: boolean; sms: boolean } }) => {
+  const handleTermsConfirm = (consents: { 
+    termsAccepted: boolean; 
+    marketing: { email: boolean; sms: boolean };
+    facilityId?: { fetch: boolean; value?: string };
+  }) => {
     setConsents({ 
       terms: consents.termsAccepted, 
       marketing: consents.marketing 
     });
+
+    if (consents.facilityId) {
+      console.log('Facility ID choice:', consents.facilityId);
+    }
     
     // Check for risk info (FAST / KVARTS)
     const productType = state.selectedProduct?.type;
@@ -336,6 +358,7 @@ const FlowContent = () => {
         <TermsConsent 
           onConfirm={handleTermsConfirm}
           onBack={handleBack}
+          requiresFacilityId={state.scenario === 'NY' || state.scenario === 'FLYTT'}
         />
       )}
 

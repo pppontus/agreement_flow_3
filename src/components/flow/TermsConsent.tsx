@@ -2,26 +2,43 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import styles from './TermsConsent.module.css';
 
 interface TermsConsentProps {
   onConfirm: (data: { 
     termsAccepted: boolean; 
-    marketing: { email: boolean; sms: boolean } 
+    marketing: { email: boolean; sms: boolean };
+    facilityId?: { fetch: boolean; value?: string };
   }) => void;
   onBack: () => void;
+  requiresFacilityId?: boolean; // If true, show facility ID section (e.g. for moves)
 }
 
-export const TermsConsent = ({ onConfirm, onBack }: TermsConsentProps) => {
+export const TermsConsent = ({ onConfirm, onBack, requiresFacilityId = false }: TermsConsentProps) => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [marketingEmail, setMarketingEmail] = useState(false);
   const [marketingSms, setMarketingSms] = useState(false);
+  
+  // Facility ID logic
+  const [fetchFacilityId, setFetchFacilityId] = useState(true);
+  const [manualFacilityId, setManualFacilityId] = useState('');
+  const [facilityIdError, setFacilityIdError] = useState('');
 
   const handleContinue = () => {
+    if (requiresFacilityId && !fetchFacilityId && !manualFacilityId) {
+      setFacilityIdError('Ange anläggnings-ID eller ge fullmakt');
+      return;
+    }
+
     if (termsAccepted) {
       onConfirm({
         termsAccepted,
-        marketing: { email: marketingEmail, sms: marketingSms }
+        marketing: { email: marketingEmail, sms: marketingSms },
+        facilityId: requiresFacilityId ? {
+          fetch: fetchFacilityId,
+          value: !fetchFacilityId ? manualFacilityId : undefined
+        } : undefined
       });
     }
   };
@@ -36,6 +53,48 @@ export const TermsConsent = ({ onConfirm, onBack }: TermsConsentProps) => {
       </header>
 
       <div className={styles.section}>
+        {requiresFacilityId && (
+          <div className={styles.facilitySection}>
+            <p className={styles.facilityInfoText}>
+              Ett anläggnings-ID är en unik kod för din elmätare som du hittar hos ditt nätbolag, oftast på din elfaktura.
+            </p>
+            
+            <label className={`${styles.checkboxLabel} ${fetchFacilityId ? styles.checked : ''}`}>
+              <input 
+                type="checkbox" 
+                checked={fetchFacilityId} 
+                onChange={(e) => {
+                  setFetchFacilityId(e.target.checked);
+                  setFacilityIdError('');
+                }}
+                className={styles.checkbox}
+              />
+              <span className={styles.labelText}>
+                Jag godkänner att Bixia hämtar mitt anläggnings-ID åt mig med fullmakt.
+              </span>
+            </label>
+
+            {!fetchFacilityId && (
+              <div className={styles.manualFacilityId}>
+                <Input
+                  label="Anläggnings-ID"
+                  placeholder="735999..."
+                  value={manualFacilityId}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setManualFacilityId(val);
+                    setFacilityIdError('');
+                  }}
+                  error={facilityIdError}
+                  maxLength={18}
+                />
+                <p className={styles.helperText}>Ditt anläggnings-ID består av 18 siffror och börjar oftast på 735999.</p>
+              </div>
+            )}
+            <div className={styles.divider}></div>
+          </div>
+        )}
+
         <label className={`${styles.checkboxLabel} ${termsAccepted ? styles.checked : ''}`}>
           <input 
             type="checkbox" 

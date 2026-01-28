@@ -1,0 +1,166 @@
+.container {
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn var(--transition-normal);
+}
+
+.header {
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--font-size-xl);
+}
+
+.progress {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.progressBar {
+  height: 4px;
+  background: var(--color-bg-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: var(--space-xl);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-text-primary);
+  transition: width 0.3s ease;
+}
+
+.questionCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.questionText {
+  margin: 0 0 var(--space-lg) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.optionButton {
+  display: block;
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.optionButton:hover {
+  border-color: var(--color-text-primary);
+  background: var(--color-bg-card);
+}
+
+.optionSelected {
+  border-color: var(--color-text-primary);
+  background: var(--color-bg-selected);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+  padding: var(--space-sm) 0;
+}
+
+.backLink:hover {
+  color: var(--color-text-primary);
+}
+
+.cancelLink {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+  padding: var(--space-sm) 0;
+}
+
+.cancelLink:hover {
+  color: var(--color-text-secondary);
+}
+
+/* Result page styles */
+.resultCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+.resultIcon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.resultTitle {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-xl);
+}
+
+.resultMotivation {
+  margin: 0 0 var(--space-xl) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+.resultActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.secondaryAction {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  font-family: inherit;
+  padding: var(--space-sm);
+  text-decoration: underline;
+}
+
+.secondaryAction:hover {
+  color: var(--color-text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

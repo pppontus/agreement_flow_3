@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useFlowState } from '@/hooks/useFlowState';
+import { formatAddress } from '@/services/addressService';
 import styles from './SigningFlow.module.css';
 
 interface SigningFlowProps {
@@ -10,6 +12,7 @@ interface SigningFlowProps {
 }
 
 export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
+  const { state } = useFlowState();
   const [status, setStatus] = useState<'INIT' | 'PENDING' | 'SUCCESS'>('INIT');
 
   const startSigning = () => {
@@ -40,9 +43,37 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
       <div className={styles.content}>
         {status === 'INIT' && (
           <div className={styles.initView}>
-             <div className={styles.iconWrapper}>✍️</div>
+             <div className={styles.summaryContainer}>
+               <h3 className={styles.summaryTitle}>Sammanfattning</h3>
+               <div className={styles.summaryGrid}>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Avtal:</span>
+                   <span className={styles.summaryValue}>
+                     {state.selectedProduct?.name}
+                     {state.selectedProduct?.isDiscounted && <span className={styles.summaryDiscountBadge}>Rabatterat</span>}
+                   </span>
+                 </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Adress:</span>
+                   <span className={styles.summaryValue}>
+                     {state.valdAdress ? formatAddress(state.valdAdress) : '-'}
+                   </span>
+                 </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Startdatum:</span>
+                   <span className={styles.summaryValue}>{state.startDate || '-'}</span>
+                 </div>
+                 {state.selectedProduct?.pricePerKwh !== undefined && (
+                   <div className={styles.summaryItem}>
+                     <span className={styles.summaryLabel}>Pris:</span>
+                     <span className={styles.summaryValue}>{state.selectedProduct.pricePerKwh.toFixed(2)} öre/kWh</span>
+                   </div>
+                 )}
+               </div>
+             </div>
+             
              <p className={styles.initText}>
-               Klicka på knappen nedan för att starta signering med BankID.
+               Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ett nytt elavtal tecknas för ovanstående adress.
              </p>
           </div>
         )}

@@ -41,3 +41,18 @@
 .footer {
   margin-top: auto;
 }
+
+.discountBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0 var(--space-xs) 0;
+  width: fit-content;
+}
+
+.discountText {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: #10b981; /* A subtle green for discount instead of bold primary */
+  text-transform: none;
+  letter-spacing: normal;
+}

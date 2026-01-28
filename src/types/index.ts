@@ -65,6 +65,8 @@ export type Product = {
   type: 'FAST' | 'RORLIGT' | 'KVARTS';
   description: string;
   pricePerKwh?: number;
+  isDiscounted?: boolean;
+  discountText?: string;
 };
 
 export type StopReason = 

@@ -8,7 +8,7 @@ interface ProductWithPrice extends Product {
 }
 
 interface ProductCardProps {
-  product: ProductWithPrice;
+  product: Product;
   onSelect: () => void;
 }
 
@@ -18,8 +18,15 @@ export const ProductCard = ({ product, onSelect }: ProductCardProps) => {
       <div className={styles.content}>
         <div className={styles.header}>
           <h3 className={styles.name}>{product.name}</h3>
-          <span className={styles.price}>{product.pricePerKwh.toFixed(2)} öre/kWh</span>
+          {product.pricePerKwh !== undefined && (
+            <span className={styles.price}>{product.pricePerKwh.toFixed(2)} öre/kWh</span>
+          )}
         </div>
+        {product.isDiscounted && (
+          <div className={styles.discountBadge}>
+            <span className={styles.discountText}>{product.discountText}</span>
+          </div>
+        )}
         <p className={styles.description}>{product.description}</p>
       </div>
       <div className={styles.footer}>
