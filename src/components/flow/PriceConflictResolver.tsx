@@ -13,8 +13,13 @@ export const PriceConflictResolver = () => {
   if (!elomrade || !selectedProduct) return null;
 
   // Get products for the new region
-  const regionalProducts = getProductsForRegion(elomrade);
-  const updatedProduct = regionalProducts.find(p => p.id === selectedProduct.id);
+  const allRegionalProducts = getProductsForRegion(elomrade);
+  
+  // Find if the currently selected product exists in the new region
+  const updatedProduct = allRegionalProducts.find(p => p.id === selectedProduct.id);
+  
+  // Filter alternatives to only include non-discounted items (per user request)
+  const alternativeProducts = allRegionalProducts.filter(p => !p.isDiscounted);
 
   // Handle case: Product unavailable in new region
   if (!updatedProduct) {
@@ -30,7 +35,7 @@ export const PriceConflictResolver = () => {
         </div>
 
         <div className={styles.grid}>
-          {regionalProducts.map(product => (
+          {alternativeProducts.map(product => (
             <ProductCard 
               key={product.id}
               product={product}
