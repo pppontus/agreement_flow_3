@@ -44,9 +44,6 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
              <p className={styles.initText}>
                Klicka på knappen nedan för att starta signering med BankID.
              </p>
-             <Button onClick={startSigning} className={styles.signButton}>
-               Signera med BankID
-             </Button>
           </div>
         )}
 
@@ -68,13 +65,21 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
         )}
       </div>
 
-      {status !== 'SUCCESS' && (
-        <div className={styles.footer}>
-           <button className={styles.backLink} onClick={onCancel}>
+      <div className={styles.footer}>
+        {status === 'INIT' ? (
+          <Button onClick={startSigning} className={styles.signButton}>
+            Signera med BankID
+          </Button>
+        ) : status === 'PENDING' ? (
+          <div className={styles.pendingPlaceholder} />
+        ) : null}
+
+        {status !== 'SUCCESS' && (
+          <button className={styles.backLink} onClick={onCancel}>
             {status === 'PENDING' ? 'Avbryt' : '← Tillbaka'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

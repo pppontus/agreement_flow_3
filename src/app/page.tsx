@@ -49,6 +49,10 @@ const FlowContent = () => {
   const [detailsSubStep, setDetailsSubStep] = useState<'DATE' | 'CONTACT'>('DATE');
   const [tempDateData, setTempDateData] = useState<{date: string, mode: 'EARLIEST' | 'SPECIFIC'} | null>(null);
 
+  // Security: Track when BankID-only verification is required
+  const [requireBankIdVerification, setRequireBankIdVerification] = useState(false);
+  const [pendingScenarioResponse, setPendingScenarioResponse] = useState<any>(null);
+
   // Navigation helper
   const goToStep = (step: FlowStep) => {
     const params = new URLSearchParams(searchParams);
@@ -106,13 +110,29 @@ const FlowContent = () => {
         const scenarioResponse = await determineScenario(pnr, state.valdAdress, mockOverride);
         
         // API call is now automatically logged by scenarioService via apiClient
-        setCustomerScenario(scenarioResponse.scenario, scenarioResponse.customer);
-        
         console.log('Scenario detected:', scenarioResponse);
 
-        if (scenarioResponse.scenario === 'FLYTT' && scenarioResponse.currentContractAddress) {
+        // SECURITY CHECK: If existing customer used manual PNR, require BankID verification
+        // This prevents someone from looking up customer data by guessing personnummer
+        if (scenarioResponse.customer.isExistingCustomer && method === 'MANUAL_PNR') {
+          // Store the response and require BankID verification
+          setPendingScenarioResponse(scenarioResponse);
+          setRequireBankIdVerification(true);
+          // Stay on IDENTIFY step - component will now show BankID-only mode
+          return;
+        }
+
+        // If we had a pending scenario (user completed BankID after manual PNR), use it
+        const finalResponse = pendingScenarioResponse || scenarioResponse;
+        setRequireBankIdVerification(false);
+        setPendingScenarioResponse(null);
+
+        // Safe to proceed - either new customer OR verified with BankID
+        setCustomerScenario(finalResponse.scenario, finalResponse.customer);
+
+        if (finalResponse.scenario === 'FLYTT' && finalResponse.currentContractAddress) {
           // Got to Move Offer step
-          setMoveOfferData({ currentContractAddress: scenarioResponse.currentContractAddress });
+          setMoveOfferData({ currentContractAddress: finalResponse.currentContractAddress });
           goToStep('MOVE_OFFER');
         } else {
           // Proceed to DETAILS
@@ -235,13 +255,20 @@ const FlowContent = () => {
     }
   };
 
-  // Reset internal substep when entering details
+  // Reset internal substep when entering DETAILS step fresh (from IDENTIFY or MOVE_OFFER)
+  // Don't reset if navigating back from TERMS
+  const [enteredFromForward, setEnteredFromForward] = useState(false);
+
   useEffect(() => {
-    if (currentStep === 'DETAILS') {
+    if (currentStep === 'DETAILS' && !enteredFromForward) {
       setDetailsSubStep('DATE');
       setTempDateData(null);
+      setEnteredFromForward(true);
     }
-  }, [currentStep]);
+    if (currentStep !== 'DETAILS') {
+      setEnteredFromForward(false);
+    }
+  }, [currentStep, enteredFromForward]);
 
   if (!isInitialized) return null; // Or a loading spinner
 
@@ -266,7 +293,11 @@ const FlowContent = () => {
           <Identification 
             onAuthenticated={handleAuthenticated}
             onBack={handleBack}
-            // customerName is passed when we have it, but Identification doesn't use it yet (it's for post-auth)
+            bankIdOnly={requireBankIdVerification}
+            securityMessage={requireBankIdVerification 
+              ? 'Du är redan kund hos oss! För din säkerhet behöver du verifiera dig med BankID.' 
+              : undefined
+            }
           />
         )
       )}

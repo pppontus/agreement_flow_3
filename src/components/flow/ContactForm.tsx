@@ -80,7 +80,7 @@ export const ContactForm = ({ initialData, onConfirm, onBack }: ContactFormProps
             Ja, fortsätt
           </Button>
           <button 
-            className={styles.secondaryButton} 
+            className={styles.backLink} 
             onClick={() => setIsConfirming(false)}
           >
             Nej, ändra uppgifter
@@ -130,12 +130,7 @@ export const ContactForm = ({ initialData, onConfirm, onBack }: ContactFormProps
           autoComplete="tel"
         />
         
-        <div className={styles.infoBox}>
-          <span className={styles.infoIcon}>ℹ️</span>
-          <p className={styles.infoText}>
-            Vi behöver dina uppgifter för att kunna kommunicera kring ditt avtal och leveransstart.
-          </p>
-        </div>
+
       </div>
 
       <div className={styles.footer}>

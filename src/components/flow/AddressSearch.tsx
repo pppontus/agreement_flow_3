@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Address } from '@/types';
-import { searchAddresses, formatAddress } from '@/services/addressService';
+import { searchAddresses, formatAddress, fetchApartmentNumbers } from '@/services/addressService';
 import { useDevPanel } from '@/context/DevPanelContext';
 import styles from './AddressSearch.module.css';
 
@@ -26,9 +26,14 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
   
   // Apartment details
   const [apartmentNumber, setApartmentNumber] = useState('');
-  const [co, setCo] = useState('');
-  const [showCo, setShowCo] = useState(false);
+  const [apartmentList, setApartmentList] = useState<string[]>([]);
+  const [isAptsLoading, setIsAptsLoading] = useState(false);
   const [aptError, setAptError] = useState('');
+  const [showManualApt, setShowManualApt] = useState(false);
+  
+  // c/o details
+  const [showCo, setShowCo] = useState(false);
+  const [coValue, setCoValue] = useState('');
 
   useEffect(() => {
     // If we have a suggested address and haven't interacted yet, pre-fill it
@@ -67,14 +72,36 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
     return () => clearTimeout(debounce);
   }, [query, selectedAddress]);
 
+  // Load apartment list when a LGH address is selected
+  useEffect(() => {
+    if (selectedAddress?.type === 'LGH') {
+      const loadApts = async () => {
+        setIsAptsLoading(true);
+        try {
+          const apts = await fetchApartmentNumbers(selectedAddress);
+          setApartmentList(apts);
+        } catch (e) {
+          console.error("Failed to load apartments", e);
+        }
+        setIsAptsLoading(false);
+      };
+      loadApts();
+    } else {
+      setApartmentList([]);
+    }
+  }, [selectedAddress]);
+
   const handleSelect = (addr: Address) => {
     setSelectedAddress(addr);
     setQuery(formatAddress(addr));
     setShowList(false);
-    // Reset apt details when changing address
-    setApartmentNumber('');
-    setCo('');
+    // Reset or set pre-filled apt details
+    setApartmentNumber(addr.apartmentNumber || '');
     setAptError('');
+    setShowManualApt(false);
+    // Reset c/o
+    setShowCo(false);
+    setCoValue('');
   };
 
   const handleInputChange = (val: string) => {
@@ -92,7 +119,10 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
         setAptError('Lägenhetsnummer måste vara 4 siffror');
         return;
       }
-      onConfirmAddress(selectedAddress, { number: apartmentNumber, co: co || undefined });
+      onConfirmAddress(selectedAddress, { 
+        number: apartmentNumber,
+        co: coValue || undefined 
+      });
     } else {
       onConfirmAddress(selectedAddress);
     }
@@ -153,37 +183,93 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
       <div className={styles.additionalDetailsWrapper}>
         {selectedAddress?.type === 'LGH' && (
           <div className={styles.apartmentFields}>
-            <div className={styles.apartmentRow}>
-              <Input
-                label="Lägenhetsnummer (4 siffror)"
-                placeholder="0001"
-                value={apartmentNumber}
-                onChange={(e) => {
-                  setApartmentNumber(e.target.value);
-                  setAptError('');
-                }}
-                maxLength={4}
-                error={aptError}
-                className={styles.aptInput}
-              />
-              
-              {!showCo ? (
-                <button 
-                  className={styles.toggleCo} 
-                  onClick={() => setShowCo(true)}
-                >
-                  + Lägg till c/o
-                </button>
-              ) : (
+            <p className={styles.sectionLabel}>Välj lägenhetsnummer</p>
+            
+            {isAptsLoading ? (
+              <div className={styles.aptLoading}>Hämtar lägenheter...</div>
+            ) : (
+              <div className={styles.apartmentGridContainer}>
+                {Object.entries(
+                  apartmentList.reduce((acc, num) => {
+                    const floorPart = num.substring(0, 2);
+                    if (!acc[floorPart]) acc[floorPart] = [];
+                    acc[floorPart].push(num);
+                    return acc;
+                  }, {} as Record<string, string[]>)
+                )
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .map(([floorPart, numbers]) => (
+                    <div key={floorPart} className={styles.floorRow}>
+                      {numbers.sort().map(num => (
+                        <button
+                          key={num}
+                          className={`${styles.aptButton} ${apartmentNumber === num ? styles.aptButtonSelected : ''}`}
+                          onClick={() => {
+                            setApartmentNumber(num);
+                            setAptError('');
+                          }}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {!showManualApt ? (
+              <button 
+                className={styles.toggleManual}
+                onClick={() => setShowManualApt(true)}
+              >
+                Hittar du inte din lägenhet? Ange manuellt
+              </button>
+            ) : (
+              <div className={styles.apartmentRow}>
+                <Input
+                  label="Lägenhetsnummer"
+                  placeholder="0001"
+                  value={apartmentNumber}
+                  onChange={(e) => {
+                    setApartmentNumber(e.target.value);
+                    setAptError('');
+                  }}
+                  maxLength={4}
+                  error={aptError}
+                  className={styles.aptInput}
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {/* c/o toggle and field */}
+            {!showCo ? (
+              <button 
+                className={styles.toggleCo}
+                onClick={() => setShowCo(true)}
+              >
+                + Lägg till c/o
+              </button>
+            ) : (
+              <div className={styles.coRow}>
                 <Input
                   label="c/o (valfritt)"
-                  placeholder="Namn"
-                  value={co}
-                  onChange={(e) => setCo(e.target.value)}
-                  className={styles.aptInput}
+                  placeholder="c/o namn"
+                  value={coValue}
+                  onChange={(e) => setCoValue(e.target.value)}
+                  className={styles.coInput}
                 />
-              )}
-            </div>
+                <button 
+                  className={styles.removeCo}
+                  onClick={() => {
+                    setShowCo(false);
+                    setCoValue('');
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

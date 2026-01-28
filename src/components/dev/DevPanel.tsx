@@ -8,7 +8,8 @@ import styles from './DevPanel.module.css';
 const SCENARIO_OPTIONS: { value: MockScenarioType; label: string; description: string }[] = [
   { value: 'NY_KUND', label: 'Ny kund', description: 'Kunden finns inte i systemet' },
   { value: 'FLYTT', label: 'Flyttar', description: 'Befintlig kund med avtal på annan adress' },
-  { value: 'BYTE', label: 'Byter avtal', description: 'Befintlig kund med avtal på samma adress' },
+  { value: 'BYTE', label: 'Byter avtal', description: 'Befintlig kund med bindningstid' },
+  { value: 'BYTE_NO_BINDING', label: 'Byter avtal (utan bindning)', description: 'Befintlig kund utan bindningstid' },
   { value: 'RANDOM', label: 'Automatiskt', description: 'Baserat på personnummer' },
 ];
 
@@ -24,8 +25,12 @@ const PHASE_LABELS: Record<FlowPhase, string> = {
   'PRODUCT_SELECT': 'Produktval',
   'ADDRESS_SEARCH': 'Adresssökning',
   'IDENTIFY': 'Identifiering',
+  'MOVE_OFFER': 'Flyttmatchning',
   'DETAILS': 'Datum & Kontakt',
+  'TERMS': 'Villkor',
+  'RISK_INFO': 'Riskinformation',
   'SIGNING': 'Signering',
+  'CONFIRMATION': 'Kvittens',
 };
 
 export const DevPanel = () => {
@@ -215,8 +220,28 @@ export const DevPanel = () => {
                 <span className={styles.stateValue}>{flowState.customer.email || '—'}</span>
               </div>
               <div className={styles.stateRow}>
+                <span className={styles.stateLabel}>Mobil:</span>
+                <span className={styles.stateValue}>{flowState.customer.phone || '—'}</span>
+              </div>
+              <div className={styles.stateRow}>
                 <span className={styles.stateLabel}>Startdatum:</span>
                 <span className={styles.stateValue}>{flowState.startDate || '—'}</span>
+              </div>
+              <div className={styles.stateRow}>
+                <span className={styles.stateLabel}>Villkor:</span>
+                <span className={styles.stateValue}>{flowState.termsAccepted ? '✅' : '❌'}</span>
+              </div>
+              <div className={styles.stateRow}>
+                <span className={styles.stateLabel}>Riskinfo:</span>
+                <span className={styles.stateValue}>{flowState.riskInfoAccepted ? '✅' : '—'}</span>
+              </div>
+              <div className={styles.stateRow}>
+                <span className={styles.stateLabel}>Marknadsf.:</span>
+                <span className={styles.stateValue}>
+                  {flowState.marketingConsent?.email ? '✉️' : ''}
+                  {flowState.marketingConsent?.sms ? '📱' : ''}
+                  {!flowState.marketingConsent?.email && !flowState.marketingConsent?.sms ? '—' : ''}
+                </span>
               </div>
             </div>
           </section>

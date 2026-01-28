@@ -9,11 +9,13 @@ import styles from './Identification.module.css';
 interface IdentificationProps {
   onAuthenticated: (pnr: string, method: IdMethod) => void;
   onBack: () => void;
+  bankIdOnly?: boolean; // If true, hide manual PNR option (for security verification)
+  securityMessage?: string; // Optional message to show why BankID is required
 }
 
 type ViewState = 'METHOD_SELECT' | 'BANKID_PENDING' | 'MANUAL_PNR';
 
-export const Identification = ({ onAuthenticated, onBack }: IdentificationProps) => {
+export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMessage }: IdentificationProps) => {
   const [view, setView] = useState<ViewState>('METHOD_SELECT');
   const [pnr, setPnr] = useState('');
   const [pnrError, setPnrError] = useState('');
@@ -27,6 +29,14 @@ export const Identification = ({ onAuthenticated, onBack }: IdentificationProps)
       return () => clearTimeout(timer);
     }
   }, [view, onAuthenticated]);
+
+  // Reset view to METHOD_SELECT when bankIdOnly prop changes to true
+  // This ensures user sees the BankID-only interface after security check
+  useEffect(() => {
+    if (bankIdOnly) {
+      setView('METHOD_SELECT');
+    }
+  }, [bankIdOnly]);
 
   const handleManualSubmit = () => {
     // Strip all non-digit characters
@@ -45,9 +55,9 @@ export const Identification = ({ onAuthenticated, onBack }: IdentificationProps)
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>Identifiering</h2>
+        <h2 className={styles.title}>{bankIdOnly ? 'Verifiera med BankID' : 'Identifiering'}</h2>
         <p className={styles.subtitle}>
-          Vi behöver veta vem du är för att hämta dina uppgifter.
+          {securityMessage || 'Vi behöver veta vem du är för att hämta dina uppgifter.'}
         </p>
       </header>
 
@@ -64,16 +74,20 @@ export const Identification = ({ onAuthenticated, onBack }: IdentificationProps)
               Mobilt BankID
             </Button>
             
-            <div className={styles.divider}>
-              <span>eller</span>
-            </div>
+            {!bankIdOnly && (
+              <>
+                <div className={styles.divider}>
+                  <span>eller</span>
+                </div>
 
-            <button 
-              className={styles.manualLink}
-              onClick={() => setView('MANUAL_PNR')}
-            >
-              Jag har inte BankID / Vill ange manuellt
-            </button>
+                <button 
+                  className={styles.manualLink}
+                  onClick={() => setView('MANUAL_PNR')}
+                >
+                  Jag har inte BankID / Vill ange manuellt
+                </button>
+              </>
+            )}
           </div>
         )}
 

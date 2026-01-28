@@ -21,7 +21,8 @@ export type FlowPhase =
 export type MockScenarioType = 
   | 'NY_KUND'           // New customer
   | 'FLYTT'             // Move
-  | 'BYTE'              // Extension/switch
+  | 'BYTE'              // Extension/switch with binding
+  | 'BYTE_NO_BINDING'   // Existing customer without binding
   | 'RANDOM';           // Default random
 
 export type MockAddressResult = 

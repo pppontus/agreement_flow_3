@@ -10,7 +10,7 @@ export type ApiLogEntry = {
   request: any;
   response: any;
   duration: number;
-  type: 'GET' | 'POST' | 'SCENARIO' | 'IDENTIFY' | 'ADDRESS_SEARCH' | 'SIGNING';
+  type: 'GET' | 'POST' | 'SCENARIO' | 'IDENTIFY' | 'ADDRESS_SEARCH' | 'ADDRESS_DETAILS' | 'SIGNING';
 };
 
 type ApiLogListener = (entry: ApiLogEntry) => void;

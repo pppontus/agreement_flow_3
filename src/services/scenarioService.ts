@@ -34,7 +34,7 @@ const doScenarioDetermination = async (
   const normalizedPnr = pnr.replace(/\D/g, '');
 
   // Determine which scenario to use
-  let effectiveScenario: 'NY' | 'FLYTT' | 'BYTE' = 'NY';
+  let effectiveScenario: 'NY' | 'FLYTT' | 'BYTE' | 'BYTE_NO_BINDING' = 'NY';
 
   if (mockScenarioOverride && mockScenarioOverride !== 'RANDOM') {
     switch (mockScenarioOverride) {
@@ -46,6 +46,9 @@ const doScenarioDetermination = async (
         break;
       case 'BYTE':
         effectiveScenario = 'BYTE';
+        break;
+      case 'BYTE_NO_BINDING':
+        effectiveScenario = 'BYTE_NO_BINDING';
         break;
     }
   } else {
@@ -98,6 +101,20 @@ const doScenarioDetermination = async (
           phone: '070-2222222',
           folkbokforing: selectedAddress,
           contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 months binding
+        },
+        currentContractAddress: selectedAddress
+      };
+
+    case 'BYTE_NO_BINDING':
+      return {
+        scenario: 'BYTE',
+        customer: {
+          isExistingCustomer: true,
+          name: 'Stanna Utanbindning',
+          email: 'stanna.utan@example.com',
+          phone: '070-3333333',
+          folkbokforing: selectedAddress,
+          contractEndDate: null // No binding
         },
         currentContractAddress: selectedAddress
       };

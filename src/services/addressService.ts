@@ -103,3 +103,32 @@ export const searchAddresses = async (
 export const formatAddress = (addr: Address): string => {
   return `${addr.street} ${addr.number}, ${addr.postalCode} ${addr.city}`;
 };
+
+/**
+ * Mock API to fetch apartment numbers for a given address.
+ */
+export const fetchApartmentNumbers = async (address: Address): Promise<string[]> => {
+  return loggedApiCall(
+    '/api/address/apartments',
+    'ADDRESS_DETAILS',
+    { address },
+    async () => {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Generate some mock apartment numbers (usually 4 digits starting with 10xx, 11xx etc.)
+      const apartments: string[] = [];
+      const floors = 4;
+      const unitsPerFloor = 3;
+      
+      for (let f = 0; f < floors; f++) {
+        for (let u = 1; u <= unitsPerFloor; u++) {
+          apartments.push(`${10 + f}${u < 10 ? '0' : ''}${u}`);
+        }
+      }
+      
+      return apartments;
+    }
+  );
+};
+

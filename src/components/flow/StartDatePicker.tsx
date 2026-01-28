@@ -140,7 +140,7 @@ export const StartDatePicker = ({
             <div className={styles.textWrapper}>
               <span className={styles.choiceTitle}>Välj eget startdatum</span>
               <span className={styles.choiceDesc}>
-                Välj detta om du vet exakt vilket datum {isSwitching ? 'ditt nuvarande avtal går ut' : 'du flyttar in'}.
+                Välj detta om du har ett exakt datum när du vill att ditt avtal ska börja.
               </span>
               
               {mode === 'SPECIFIC' && (

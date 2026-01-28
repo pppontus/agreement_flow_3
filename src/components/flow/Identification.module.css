@@ -200,27 +200,45 @@
 
 .actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
 }
 
-.globalBackLink,
 .backLink {
+  margin: 0;
+  padding: var(--space-sm) 0;
   background: none;
   border: none;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
   font-family: inherit;
-  padding: 0;
+}
+
+.backLink:hover {
+  color: var(--color-text-primary);
 }
 
 .globalBackLink {
+  display: block;
   margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
 }
 
-.backLink:hover,
 .globalBackLink:hover {
   color: var(--color-text-primary);
 }

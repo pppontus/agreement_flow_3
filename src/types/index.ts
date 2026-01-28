@@ -9,6 +9,7 @@ export type Address = {
   city: string;
   type?: 'LGH' | 'VILLA' | 'UNKNOWN';
   elomrade?: 'SE1' | 'SE2' | 'SE3' | 'SE4';
+  apartmentNumber?: string;
 };
 
 export type Elomrade = 'SE1' | 'SE2' | 'SE3' | 'SE4';
