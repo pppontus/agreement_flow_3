@@ -65,8 +65,8 @@ export const lookupCompany = async (orgNr: string): Promise<CompanyLookupResult>
     : orgNr;
 
   return apiClient.loggedApiCall(
-    'GET' as any, // Temporary cast until we add COMPANY_SEARCH type
     `/api/company/${formattedOrgNr}`,
+    'COMPANY_SEARCH',
     undefined,
     async () => {
       // Simulate network delay

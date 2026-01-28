@@ -12,7 +12,7 @@ interface SigningFlowProps {
 }
 
 export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
-  const { state } = useFlowState();
+  const { state: rawState } = useFlowState();
   const [status, setStatus] = useState<'INIT' | 'PENDING' | 'SUCCESS'>('INIT');
 
   const startSigning = () => {
@@ -28,6 +28,9 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
       return () => clearTimeout(timer);
     }
   }, [status, onSigned]);
+
+  if (rawState.customerType !== 'PRIVATE') return null;
+  const state = rawState;
 
   return (
     <div className={styles.container}>
