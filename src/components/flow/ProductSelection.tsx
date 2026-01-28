@@ -68,27 +68,11 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
   return (
     <div className={styles.container}>
       {!state.valdAdress && (
-        <section className={styles.introSection}>
-          <div className={styles.introHeader}>
-            <span className={styles.badge}>Arkitektur-koncept: Smart Flow MVP</span>
-            <h1 className={styles.introTitle}>Fristående produktval & konvertering</h1>
-          </div>
-          <div className={styles.introGrid}>
-            <div className={styles.introColumn}>
-              <h3 className={styles.introSubTitle}>Fokus: Användarresa & Logik</h3>
-              <p className={styles.introText}>
-                Prototypen demonstrerar hur vi lyft ur produktkorten från det linjära flödet så att köpet kan inledas var som helst ifrån. 
-                Fokus ligger på flödets funktion, relevans och i vilken ordning information visas – inte på slutgiltig design eller exakta ordval.
-              </p>
-            </div>
-            <div className={styles.introColumn}>
-              <h3 className={styles.introSubTitle}>Enkelhet & Relevans</h3>
-              <p className={styles.introText}>
-                Kärnan är ett flöde som är enkelt att klicka sig igenom där enbart det som är relevant för respektive kund dyker upp. 
-                Konceptet stödjer flera scenarion: teckna nytt elavtal, lägga till avtal (extra anläggning) samt hantera inflytt/flytt.
-              </p>
-            </div>
-          </div>
+        <section className={styles.conceptSection}>
+          <p className={styles.conceptText}>
+            Denna sida representerar en valfri undersida på bixia.se. I det här konceptet har vi brutit ut "produktkorten" 
+            så att de kan placeras var som helst på hemsidan för att inleda avtalsflödet därifrån.
+          </p>
         </section>
       )}
 

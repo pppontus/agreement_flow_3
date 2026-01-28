@@ -3,68 +3,22 @@
   max-width: 1000px;
 }
 
-.introSection {
-  margin-bottom: var(--space-2xl);
-  padding: var(--space-xl);
+.conceptSection {
+  margin-bottom: var(--space-xl);
+  padding: var(--space-lg);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border-left: 4px solid var(--color-text-primary);
-  animation: fadeIn var(--transition-normal);
 }
 
-.badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-primary);
-  background: var(--color-bg-selected);
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-bottom: var(--space-md);
-}
-
-.introHeader {
-  margin-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-md);
-}
-
-.introTitle {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.introGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-xl);
-}
-
-.introColumn {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.introSubTitle {
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.introText {
+.conceptText {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0;
+  max-width: 800px;
 }
+
 
 .unspecifiedSection {
   margin-bottom: var(--space-2xl);
