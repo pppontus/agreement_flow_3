@@ -1,0 +1,14 @@
+.card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-bg-selected);
+  box-shadow: var(--shadow-md);
+}

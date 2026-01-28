@@ -1,0 +1,122 @@
+.container {
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn var(--transition-normal);
+}
+
+.header {
+  margin-bottom: var(--space-xl);
+}
+
+.title {
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.choice {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.choice:hover {
+  border-color: var(--color-text-primary);
+}
+
+.choice.selected {
+  border-color: var(--color-text-primary);
+  background: var(--color-bg-selected);
+  box-shadow: var(--shadow-sm);
+}
+
+.radioWrapper {
+  padding-top: 2px;
+}
+
+.radio {
+  accent-color: var(--color-text-primary);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.textWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1;
+}
+
+.choiceTitle {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+.choiceDesc {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.dateInputWrapper {
+  margin-top: var(--space-sm);
+}
+
+.dateInput {
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  width: 100%;
+  max-width: 200px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-lg);
+}
+
+.continueButton {
+  min-width: 200px;
+}
+
+.backLink {
+  display: inline-block;
+  padding: var(--space-sm) 0;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.backLink:hover {
+  color: var(--color-text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,186 @@
+/* AddressSearch.module.css updates to fix overlay context stacking */
+
+.container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.header {
+  margin-bottom: var(--space-xl);
+}
+
+.title {
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.searchWrapper {
+  position: relative;
+  margin-bottom: var(--space-md);
+  z-index: 10; /* Ensure search wrapper is above other content */
+}
+
+.results {
+  margin-top: var(--space-xs);
+  position: absolute;
+  width: 100%;
+  z-index: 100;
+}
+
+.loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md);
+  color: var(--color-text-muted);
+  text-align: center;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: var(--color-bg-card);
+}
+
+.resultItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-card);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  transition: background-color var(--transition-fast);
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.address {
+  color: var(--color-text-primary);
+}
+
+.type {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-selected);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.noResults {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.additionalDetailsWrapper {
+  min-height: 100px; /* Reserve space to prevent shifting */
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1; /* Lower than search results */
+}
+
+.apartmentFields {
+  width: 100%;
+  animation: fadeIn var(--transition-normal);
+}
+
+.apartmentRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.aptInput {
+  flex: 1;
+  min-width: 180px;
+}
+
+.toggleCo {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+  padding: var(--space-sm) 0;
+  margin-bottom: var(--space-xs);
+}
+
+.toggleCo:hover {
+  color: var(--color-text-primary);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-lg);
+  position: relative;
+  z-index: 1; /* Lower than search results */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.confirmButton {
+  min-width: 200px;
+}
+
+.backLink {
+  display: inline-block;
+  padding: var(--space-sm) 0;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.backLink:hover {
+  color: var(--color-text-primary);
+}
