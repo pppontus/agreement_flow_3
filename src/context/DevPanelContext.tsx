@@ -13,7 +13,10 @@ export type FlowPhase =
   | 'IDENTIFY'
   | 'MOVE_OFFER'
   | 'DETAILS'
-  | 'SIGNING';
+  | 'TERMS'
+  | 'RISK_INFO'
+  | 'SIGNING'
+  | 'CONFIRMATION';
 
 export type MockScenarioType = 
   | 'NY_KUND'           // New customer

@@ -46,6 +46,7 @@ interface FlowStateContextType {
   setCustomerDetails: (details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => void;
   setElomrade: (elomrade: Elomrade) => void;
   resolvePriceConflict: () => void;
+  setConsents: (consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => void;
   resetState: () => void;
 }
 
@@ -164,6 +165,14 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     updateState({ isPriceConflict: false });
   }, [updateState]);
 
+  const setConsents = useCallback((consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => {
+    updateState({
+      termsAccepted: consents.terms ?? undefined,
+      riskInfoAccepted: consents.risk ?? undefined, 
+      marketingConsent: consents.marketing ? { ...consents.marketing } : undefined
+    });
+  }, [updateState]);
+
   return (
     <FlowStateContext.Provider value={{ 
       state, 
@@ -175,6 +184,7 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       setCustomerDetails,
       setElomrade,
       resolvePriceConflict,
+      setConsents,
       resetState 
     }}>
       {children}

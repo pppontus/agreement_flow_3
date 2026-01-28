@@ -8,6 +8,10 @@ import { Identification } from "@/components/flow/Identification";
 import { MoveOffer } from "@/components/flow/MoveOffer";
 import { StartDatePicker } from "@/components/flow/StartDatePicker";
 import { ContactForm } from "@/components/flow/ContactForm";
+import { TermsConsent } from "@/components/flow/TermsConsent";
+import { RiskInfo } from "@/components/flow/RiskInfo";
+import { SigningFlow } from "@/components/flow/SigningFlow";
+import { Confirmation } from "@/components/flow/Confirmation";
 import { Address, Product, IdMethod } from "@/types";
 import { useFlowState } from '@/hooks/useFlowState';
 import { determineScenario } from '@/services/scenarioService';
@@ -21,7 +25,11 @@ type FlowStep =
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
   | 'MOVE_OFFER'
-  | 'DETAILS'; // Combined Date + Contact
+  | 'DETAILS'
+  | 'TERMS'
+  | 'RISK_INFO'
+  | 'SIGNING'
+  | 'CONFIRMATION';
 
 // Internal component to use useSearchParams (requires Suspense boundary or to be in a client page)
 const FlowContent = () => {
@@ -30,7 +38,7 @@ const FlowContent = () => {
   const searchParams = useSearchParams();
   const currentStep = (searchParams.get('step') as FlowStep) || 'PRODUCT_SELECT';
   
-  const { state, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setCustomerDetails, setElomrade } = useFlowState();
+  const { state, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setCustomerDetails, setElomrade, setConsents, resetState } = useFlowState();
   const { state: devState, setCurrentPhase } = useDevPanel();
 
   // Local state for move offer dialog and multi-step interactions
@@ -136,8 +144,94 @@ const FlowContent = () => {
         phone: contact.phone
       });
       console.log('Details confirmed:', { date: tempDateData, contact });
-      alert(`Datum och kontakt sparat! Datum: ${tempDateData.date}, E-post: ${contact.email}. Nästa steg: Villkor & Signering.`);
-      // goToStep('SIGNING'); // Future
+      // alert(`Datum och kontakt sparat! Datum: ${tempDateData.date}, E-post: ${contact.email}. Nästa steg: Villkor & Signering.`);
+      goToStep('TERMS');
+    }
+  };
+
+  const handleTermsConfirm = (consents: { termsAccepted: boolean; marketing: { email: boolean; sms: boolean } }) => {
+    setConsents({ 
+      terms: consents.termsAccepted, 
+      marketing: consents.marketing 
+    });
+    
+    // Check for risk info (FAST / KVARTS)
+    const productType = state.selectedProduct?.type;
+    if (productType === 'FAST' || productType === 'KVARTS') {
+      goToStep('RISK_INFO');
+    } else {
+      goToStep('SIGNING');
+    }
+  };
+
+  const handleRiskConfirm = () => {
+    setConsents({ risk: true });
+    goToStep('SIGNING');
+  };
+
+  const handleSigned = () => {
+    // In real app, verify signature here
+    // Create mock order ID
+    const mockOrderId = `ORD-${Math.floor(Math.random() * 100000)}`;
+    // We would save this to state/backend here
+    // For now we just go to confirmation
+    goToStep('CONFIRMATION');
+    // Save orderId in state if needed, or pass as prop? 
+    // FlowState doesn't accept orderId updates easily, so we rely on rendering Confirmation with mock ID or passing state.
+    // Actually caseState has caseId, we might use that. But let's just render Confirmation.
+  };
+
+  const handleConfirmationReset = () => {
+    resetState();
+    // Also clear query params
+    router.push(pathname);
+  };
+
+  // Centralized Back Logic
+  const handleBack = () => {
+    switch (currentStep) {
+      case 'ADDRESS_SEARCH':
+        goToStep('PRODUCT_SELECT');
+        break;
+      case 'IDENTIFY':
+        goToStep('ADDRESS_SEARCH');
+        break;
+      case 'MOVE_OFFER':
+        goToStep('IDENTIFY');
+        break;
+      case 'DETAILS':
+        if (detailsSubStep === 'CONTACT') {
+          setDetailsSubStep('DATE');
+        } else {
+          // If in DATE step, check if we came from MOVE_OFFER
+          if (state.scenario === 'FLYTT' && moveOfferData) {
+            goToStep('MOVE_OFFER');
+          } else {
+            goToStep('IDENTIFY');
+          }
+        }
+        break;
+      case 'TERMS':
+        setDetailsSubStep('CONTACT');
+        goToStep('DETAILS');
+        break;
+      case 'RISK_INFO':
+        goToStep('TERMS');
+        break;
+      case 'SIGNING':
+        // Determine where we came from based on product
+        if (state.selectedProduct?.type === 'FAST' || state.selectedProduct?.type === 'KVARTS') {
+          goToStep('RISK_INFO');
+        } else {
+          goToStep('TERMS');
+        }
+        break;
+      case 'CONFIRMATION':
+        // No back from confirmation usually, but for dev:
+        goToStep('SIGNING');
+        break;
+      default:
+        console.warn('Unknown step for back navigation');
     }
   };
 
@@ -160,7 +254,7 @@ const FlowContent = () => {
       {currentStep === 'ADDRESS_SEARCH' && (
         <AddressSearch 
           onConfirmAddress={handleAddressConfirm}
-          onBack={() => goToStep('PRODUCT_SELECT')}
+          onBack={handleBack}
           suggestedAddress={state.customer.folkbokforing}
         />
       )}
@@ -171,7 +265,7 @@ const FlowContent = () => {
         ) : (
           <Identification 
             onAuthenticated={handleAuthenticated}
-            onBack={() => goToStep('ADDRESS_SEARCH')}
+            onBack={handleBack}
             // customerName is passed when we have it, but Identification doesn't use it yet (it's for post-auth)
           />
         )
@@ -180,7 +274,7 @@ const FlowContent = () => {
       {currentStep === 'DETAILS' && detailsSubStep === 'DATE' && (
         <StartDatePicker 
           onSelectDate={handleDateSelect}
-          onBack={() => goToStep('IDENTIFY')}
+          onBack={handleBack}
           address={state.valdAdress || undefined}
           isSwitching={state.scenario === 'BYTE'}
           productName={state.selectedProduct?.name}
@@ -193,7 +287,7 @@ const FlowContent = () => {
         <ContactForm 
           initialData={state.customer}
           onConfirm={handleContactConfirm}
-          onBack={() => setDetailsSubStep('DATE')}
+          onBack={handleBack}
         />
       )}
 
@@ -203,7 +297,39 @@ const FlowContent = () => {
           newAddress={state.valdAdress}
           onMove={() => handleMoveChoice('MOVE')}
           onNew={() => handleMoveChoice('NEW')}
-          onBack={() => goToStep('IDENTIFY')}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'TERMS' && (
+        <TermsConsent 
+          onConfirm={handleTermsConfirm}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'RISK_INFO' && (
+        <RiskInfo 
+          onConfirm={handleRiskConfirm}
+          onBack={handleBack}
+          productType={state.selectedProduct?.type || 'FAST'}
+        />
+      )}
+
+      {currentStep === 'SIGNING' && (
+        <SigningFlow 
+          onSigned={handleSigned}
+          onCancel={handleBack}
+        />
+      )}
+
+      {currentStep === 'CONFIRMATION' && (
+        <Confirmation 
+          orderId="ORD-123456"
+          product={state.selectedProduct || undefined}
+          address={state.valdAdress || undefined}
+          email={state.customer.email || undefined}
+          onReset={handleConfirmationReset}
         />
       )}
     </>
