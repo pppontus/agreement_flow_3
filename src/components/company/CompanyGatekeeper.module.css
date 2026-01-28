@@ -1,0 +1,55 @@
+.container {
+  max-width: 550px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-sm);
+}
+
+.description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  text-align: left;
+}
+
+.submitBtn {
+  margin-top: var(--space-md);
+  width: 100%;
+}
+
+/* Blocked State Styles */
+.icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.contactBox {
+  background: var(--color-bg-secondary);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin: var(--space-lg) 0;
+}
+
+.phoneLink {
+  display: block;
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin: var(--space-xs) 0;
+}
+
+.subtext {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}

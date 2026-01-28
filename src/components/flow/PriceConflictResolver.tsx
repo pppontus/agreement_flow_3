@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/Button';
 import styles from './PriceConflictResolver.module.css';
 
 export const PriceConflictResolver = () => {
-  const { state, selectProduct, resolvePriceConflict } = useFlowState();
+  const { state: rawState, selectProduct, resolvePriceConflict } = useFlowState();
+  
+  if (rawState.customerType !== 'PRIVATE') return null;
+  const state = rawState;
   const { elomrade, selectedProduct } = state;
 
   if (!elomrade || !selectedProduct) return null;

@@ -1,9 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { CaseState, Product, Address, IdMethod, Scenario, Elomrade } from '@/types';
+import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade } from '@/types';
+import { CompanyState } from '@/types/company';
 
-const INITIAL_STATE: CaseState = {
+const INITIAL_PRIVATE_STATE: PrivateCaseState = {
+  customerType: 'PRIVATE',
   caseId: null,
   entryPoint: 'PRODUCT_FIRST',
   scenario: 'UNKNOWN',
@@ -34,11 +36,34 @@ const INITIAL_STATE: CaseState = {
   stop: { isStopped: false, reason: null },
 };
 
-const STORAGE_KEY = 'bixia_flow_state_v1';
+const INITIAL_COMPANY_STATE: CompanyState = {
+  customerType: 'COMPANY',
+  totalConsumption: 0,
+  facilityCount: 0,
+  orgNr: null,
+  companyName: null,
+  isCreditApproved: false,
+  signatoryType: 'UNKNOWN',
+  primarySigner: null,
+  secondarySigner: null,
+  facilities: [],
+  selectedProduct: null,
+  startDate: null,
+  invoiceAddress: 'SAME_AS_VISITING',
+  invoiceReference: null,
+  termsAccepted: false,
+  authorityDeclared: false,
+};
+
+const INITIAL_STATE: CaseState = INITIAL_PRIVATE_STATE;
+
+const STORAGE_KEY = 'bixia_flow_state_v2'; // Bump version since structure changed
 
 interface FlowStateContextType {
   state: CaseState;
   isInitialized: boolean;
+  setCustomerType: (type: 'PRIVATE' | 'COMPANY') => void;
+  // Private Flow Setters
   selectProduct: (product: Product) => void;
   setAddress: (address: Address, apartmentDetails?: { number: string | null; co: string | null }) => void;
   setAuthenticated: (pnr: string, method: IdMethod) => void;
@@ -48,6 +73,7 @@ interface FlowStateContextType {
   resolvePriceConflict: () => void;
   setConsents: (consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => void;
   resetState: () => void;
+  // Company Flow Setters will be added here in Phase 2
 }
 
 const FlowStateContext = createContext<FlowStateContextType | null>(null);
@@ -87,22 +113,26 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state, isInitialized]);
 
-  const updateState = useCallback((updates: Partial<CaseState>) => {
-    setState(prev => ({ ...prev, ...updates }));
+  const setCustomerType = useCallback((type: 'PRIVATE' | 'COMPANY') => {
+    if (type === 'PRIVATE') {
+      setState(INITIAL_PRIVATE_STATE);
+    } else {
+      setState(INITIAL_COMPANY_STATE);
+    }
   }, []);
 
   const selectProduct = useCallback((product: Product) => {
-    updateState({ selectedProduct: product });
-  }, [updateState]);
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return { ...prev, selectedProduct: product };
+    });
+  }, []);
 
   const setAddress = useCallback((address: Address, apartmentDetails?: { number: string | null, co: string | null }) => {
-    // Check for price conflict (if address region differs from detected region)
-    // If detected region matches address region, no conflict.
-    // If address has no region data, assume no conflict (fallback).
-    let isConflict = false;
-    
     setState(prev => {
-      // Logic inside setter to access latest state
+      if (prev.customerType !== 'PRIVATE') return prev;
+      
+      let isConflict = false;
       if (address.elomrade && prev.elomrade && address.elomrade !== prev.elomrade) {
         isConflict = true;
       }
@@ -110,7 +140,6 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...prev,
         valdAdress: address,
-        // If conflict, update to the actual region of the address
         elomrade: address.elomrade || prev.elomrade,
         isPriceConflict: isConflict,
         addressDetails: {
@@ -123,60 +152,82 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setAuthenticated = useCallback((pnr: string, method: IdMethod) => {
-    updateState({
-      personnummer: pnr,
-      idMethod: method,
-      isAuthenticated: true
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        personnummer: pnr,
+        idMethod: method,
+        isAuthenticated: true
+      };
     });
-  }, [updateState]);
+  }, []);
 
   const setCustomerScenario = useCallback((scenario: Scenario, customer: any) => {
-    updateState({
-      scenario,
-      customer: {
-        ...customer,
-        folkbokforing: customer.folkbokforing || null, 
-      }
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        scenario,
+        customer: {
+          ...customer,
+          folkbokforing: customer.folkbokforing || null, 
+        }
+      };
     });
-  }, [updateState]);
+  }, []);
 
   const setCustomerDetails = useCallback((details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => {
-    setState(prev => ({
-      ...prev,
-      startDate: details.startDate,
-      startDateMode: details.startDateMode === 'SPECIFIC' ? 'CHOOSE_DATE' : 'EARLIEST',
-      customer: {
-        ...prev.customer,
-        email: details.email,
-        phone: details.phone
-      }
-    }));
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        startDate: details.startDate,
+        startDateMode: details.startDateMode === 'SPECIFIC' ? 'CHOOSE_DATE' : 'EARLIEST',
+        customer: {
+          ...prev.customer,
+          email: details.email,
+          phone: details.phone
+        }
+      };
+    });
   }, []);
 
   const resetState = useCallback(() => {
-    setState(INITIAL_STATE);
+    setState(prev => prev.customerType === 'PRIVATE' ? INITIAL_PRIVATE_STATE : INITIAL_COMPANY_STATE);
   }, []);
 
   const setElomrade = useCallback((elomrade: Elomrade) => {
-    updateState({ elomrade });
-  }, [updateState]);
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return { ...prev, elomrade };
+    });
+  }, []);
 
   const resolvePriceConflict = useCallback(() => {
-    updateState({ isPriceConflict: false });
-  }, [updateState]);
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return { ...prev, isPriceConflict: false };
+    });
+  }, []);
 
   const setConsents = useCallback((consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => {
-    updateState({
-      termsAccepted: consents.terms ?? undefined,
-      riskInfoAccepted: consents.risk ?? undefined, 
-      marketingConsent: consents.marketing ? { ...consents.marketing } : undefined
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        termsAccepted: consents.terms ?? prev.termsAccepted,
+        riskInfoAccepted: consents.risk ?? prev.riskInfoAccepted, 
+        marketingConsent: consents.marketing ? { ...consents.marketing } : prev.marketingConsent
+      };
     });
-  }, [updateState]);
+  }, []);
 
   return (
     <FlowStateContext.Provider value={{ 
       state, 
       isInitialized, 
+      setCustomerType,
       selectProduct, 
       setAddress, 
       setAuthenticated, 

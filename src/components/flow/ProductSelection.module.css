@@ -78,6 +78,17 @@
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
+  min-height: 50px; /* To prevent collapse if empty */
+}
+
+/* If only one child key exists (e.g. toggle only), push it to the right */
+.optionsRow > :last-child {
+  margin-left: auto;
+}
+
+/* If advisor link is present (first child), reset margin for it */
+.optionsRow > :first-child:not(:last-child) {
+  margin-left: 0;
 }
 
 .advisorLink {

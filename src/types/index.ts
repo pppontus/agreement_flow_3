@@ -14,7 +14,10 @@ export type Address = {
 
 export type Elomrade = 'SE1' | 'SE2' | 'SE3' | 'SE4';
 
-export type CaseState = {
+import { CompanyState } from './company';
+
+export type PrivateCaseState = {
+  customerType: 'PRIVATE';
   // Meta
   caseId: string | null;
   entryPoint: EntryPoint;
@@ -59,14 +62,17 @@ export type CaseState = {
   stop: { isStopped: boolean; reason: StopReason | null };
 };
 
+export type CaseState = PrivateCaseState | CompanyState;
+
 export type Product = {
   id: string;
   name: string;
-  type: 'FAST' | 'RORLIGT' | 'KVARTS';
+  type: 'FAST' | 'RORLIGT' | 'KVARTS' | 'FORVALTAT';
   description: string;
   pricePerKwh?: number;
   isDiscounted?: boolean;
   discountText?: string;
+  isCompanyOnly?: boolean;
 };
 
 export type StopReason = 

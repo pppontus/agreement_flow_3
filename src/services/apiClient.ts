@@ -10,7 +10,7 @@ export type ApiLogEntry = {
   request: any;
   response: any;
   duration: number;
-  type: 'GET' | 'POST' | 'SCENARIO' | 'IDENTIFY' | 'ADDRESS_SEARCH' | 'ADDRESS_DETAILS' | 'SIGNING';
+  type: 'GET' | 'POST' | 'SCENARIO' | 'IDENTIFY' | 'ADDRESS_SEARCH' | 'ADDRESS_DETAILS' | 'SIGNING' | 'COMPANY_SEARCH';
 };
 
 type ApiLogListener = (entry: ApiLogEntry) => void;
@@ -74,3 +74,9 @@ export async function loggedApiCall<T>(
     throw error;
   }
 }
+
+
+export const apiClient = {
+  loggedApiCall
+};
+

@@ -1,58 +1,61 @@
 .productCard {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: var(--space-md);
-  height: 100%;
-  position: relative;
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  flex: 1;
+  padding: var(--space-lg);
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .name {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  margin-bottom: var(--space-xs);
+}
+
+.priceContainer {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
 }
 
 .price {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: var(--color-primary);
 }
 
-.description {
-  font-size: var(--font-size-md);
+.vatLabel {
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-}
-
-.footer {
-  margin-top: auto;
+  font-weight: normal;
 }
 
 .discountBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 0 var(--space-xs) 0;
-  width: fit-content;
+  background: #fef3c7;
+  color: #92400e;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: bold;
 }
 
-.discountText {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: #10b981; /* A subtle green for discount instead of bold primary */
-  text-transform: none;
-  letter-spacing: normal;
+.description {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
 }

@@ -11,24 +11,37 @@ import styles from './ProductSelection.module.css';
 
 interface ProductSelectionProps {
   onProductSelect?: (product: Product) => void;
+  isCompany?: boolean;
+  initialRegion?: string;
+  hideRegionSelector?: boolean;
 }
 
-export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => {
-  const { state, setElomrade } = useFlowState();
+export const ProductSelection = ({ 
+  onProductSelect, 
+  isCompany = false,
+  initialRegion,
+  hideRegionSelector = false
+}: ProductSelectionProps) => {
+  const { state: rawState, setElomrade } = useFlowState();
   
-  // Use elomrade from state, fallback to SE3
-  const [region, setLocalRegion] = useState(state.elomrade || 'SE3');
+  // Safely get private state if applicable
+  const privateState = rawState.customerType === 'PRIVATE' ? rawState : null;
+  const effectiveRegion = initialRegion || (typeof privateState?.elomrade === 'string' ? privateState.elomrade : 'SE3');
+  const hasSelectedAddress = hideRegionSelector || !!privateState?.valdAdress;
+
+  const [region, setLocalRegion] = useState(effectiveRegion);
   const [showAdvisor, setShowAdvisor] = useState(false);
   const [showDiscounts, setShowDiscounts] = useState(false);
   
-  // Sync local region when state.elomrade changes (e.g., after API detection)
+  // Sync local region when state.elomrade changes (only for private flow)
   useEffect(() => {
-    if (state.elomrade && state.elomrade !== region) {
-      setLocalRegion(state.elomrade);
+    if (privateState?.elomrade && privateState.elomrade !== region) {
+      setLocalRegion(privateState.elomrade);
     }
-  }, [state.elomrade]);
+  }, [privateState?.elomrade]);
   
-  const allProducts = getProductsForRegion(region);
+  // Pass isCompany to getProductsForRegion
+  const allProducts = getProductsForRegion(region, isCompany);
   const standardProducts = allProducts.filter(p => !p.isDiscounted);
   const discountedProducts = allProducts.filter(p => p.isDiscounted);
   
@@ -37,7 +50,9 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newRegion = e.target.value as 'SE1' | 'SE2' | 'SE3' | 'SE4';
     setLocalRegion(newRegion);
-    setElomrade(newRegion); // Persist to state
+    if (!isCompany) {
+      setElomrade(newRegion); // Only persist to global state for private flow
+    }
   };
 
   const handleSelectProduct = (product: Product) => {
@@ -47,7 +62,6 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
   };
 
   const handleAdvisorSelect = (type: 'FAST' | 'RORLIGT' | 'KVARTS') => {
-    // Find matching product (prefer standard if unsure)
     const product = standardProducts.find(p => p.type === type);
     if (product && onProductSelect) {
       onProductSelect(product);
@@ -55,7 +69,6 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
     setShowAdvisor(false);
   };
 
-  // Show advisor wizard if active
   if (showAdvisor) {
     return (
       <ContractAdvisor
@@ -67,7 +80,7 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
 
   return (
     <div className={styles.container}>
-      {!state.valdAdress && (
+      {!hasSelectedAddress && (
         <section className={styles.conceptSection}>
           <p className={styles.conceptText}>
             Denna sida representerar en valfri undersida på bixia.se. I det här konceptet har vi brutit ut "produktkorten" 
@@ -78,7 +91,7 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
 
       <header className={styles.header}>
         <h2 className={styles.title}>Välj elavtal</h2>
-        {!state.valdAdress && (
+        {!hasSelectedAddress && (
           <div className={styles.controls}>
             <Select 
               label="Elområde"
@@ -96,12 +109,14 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
       </header>
 
       <div className={styles.optionsRow}>
-        <button 
-          className={styles.advisorLink}
-          onClick={() => setShowAdvisor(true)}
-        >
-          💡 Hjälp mig välja avtalsform
-        </button>
+        {!isCompany && (
+          <button 
+            className={styles.advisorLink}
+            onClick={() => setShowAdvisor(true)}
+          >
+            💡 Hjälp mig välja avtalsform
+          </button>
+        )}
 
         {discountedProducts.length > 0 && (
           <div className={styles.toggleWrapper}>
@@ -124,11 +139,12 @@ export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => 
             key={product.id} 
             product={product} 
             onSelect={() => handleSelectProduct(product)}
+            showVat={!isCompany}
           />
         ))}
       </div>
 
-      {!state.valdAdress && (
+      {!hasSelectedAddress && (
         <section className={styles.unspecifiedSection}>
           <header className={styles.header} style={{ marginTop: 'var(--space-2xl)' }}>
             <h2 className={styles.title}>Ej specificerat avtal</h2>

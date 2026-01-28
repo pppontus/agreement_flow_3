@@ -171,78 +171,101 @@ export const DevPanel = () => {
 
           {/* Current Flow State */}
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>📊 Sparad data</h3>
+            <h3 className={styles.sectionTitle}>📊 Sparad data ({flowState.customerType})</h3>
             <div className={styles.stateBox}>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Elområde:</span>
-                <span className={styles.stateValue}>{flowState.elomrade || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Produkt:</span>
-                <span className={styles.stateValue}>{flowState.selectedProduct?.name || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Adress:</span>
-                <span className={styles.stateValue}>
-                  {flowState.valdAdress 
-                    ? `${flowState.valdAdress.street} ${flowState.valdAdress.number}, ${flowState.valdAdress.city}`
-                    : '—'}
-                </span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Boendeform:</span>
-                <span className={styles.stateValue}>
-                  {flowState.addressDetails.boendeform || '—'}
-                  {flowState.addressDetails.boendeform === 'lägenhet' && flowState.addressDetails.apartmentNumber && 
-                    ` (${flowState.addressDetails.apartmentNumber})`}
-                </span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Identifierad:</span>
-                <span className={styles.stateValue}>
-                  {flowState.isAuthenticated ? `Ja (${flowState.idMethod})` : 'Nej'}
-                </span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Personnummer:</span>
-                <span className={styles.stateValue}>{flowState.personnummer || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Scenario:</span>
-                <span className={styles.stateValue}>{flowState.scenario}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Kund:</span>
-                <span className={styles.stateValue}>{flowState.customer.name || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>E-post:</span>
-                <span className={styles.stateValue}>{flowState.customer.email || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Mobil:</span>
-                <span className={styles.stateValue}>{flowState.customer.phone || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Startdatum:</span>
-                <span className={styles.stateValue}>{flowState.startDate || '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Villkor:</span>
-                <span className={styles.stateValue}>{flowState.termsAccepted ? '✅' : '❌'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Riskinfo:</span>
-                <span className={styles.stateValue}>{flowState.riskInfoAccepted ? '✅' : '—'}</span>
-              </div>
-              <div className={styles.stateRow}>
-                <span className={styles.stateLabel}>Marknadsf.:</span>
-                <span className={styles.stateValue}>
-                  {flowState.marketingConsent?.email ? '✉️' : ''}
-                  {flowState.marketingConsent?.sms ? '📱' : ''}
-                  {!flowState.marketingConsent?.email && !flowState.marketingConsent?.sms ? '—' : ''}
-                </span>
-              </div>
+              {flowState.customerType === 'PRIVATE' ? (
+                <>
+                  <div className={styles.stateRow}>
+                    <span className={styles.stateLabel}>Elområde:</span>
+                    <span className={styles.stateValue}>{flowState.elomrade || '—'}</span>
+                  </div>
+                  <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Produkt:</span>
+                     <span className={styles.stateValue}>{flowState.selectedProduct?.name || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Adress:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.valdAdress 
+                         ? `${flowState.valdAdress.street} ${flowState.valdAdress.number}, ${flowState.valdAdress.city}`
+                         : '—'}
+                     </span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Boendeform:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.addressDetails.boendeform || '—'}
+                       {flowState.addressDetails.boendeform === 'lägenhet' && flowState.addressDetails.apartmentNumber && 
+                         ` (${flowState.addressDetails.apartmentNumber})`}
+                     </span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Identifierad:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.isAuthenticated ? `Ja (${flowState.idMethod})` : 'Nej'}
+                     </span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Personnummer:</span>
+                     <span className={styles.stateValue}>{flowState.personnummer || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Scenario:</span>
+                     <span className={styles.stateValue}>{flowState.scenario}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Kund:</span>
+                     <span className={styles.stateValue}>{flowState.customer.name || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>E-post:</span>
+                     <span className={styles.stateValue}>{flowState.customer.email || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Mobil:</span>
+                     <span className={styles.stateValue}>{flowState.customer.phone || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Startdatum:</span>
+                     <span className={styles.stateValue}>{flowState.startDate || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Villkor:</span>
+                     <span className={styles.stateValue}>{flowState.termsAccepted ? '✅' : '❌'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Riskinfo:</span>
+                     <span className={styles.stateValue}>{flowState.riskInfoAccepted ? '✅' : '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Marknadsf.:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.marketingConsent?.email ? '✉️' : ''}
+                       {flowState.marketingConsent?.sms ? '📱' : ''}
+                       {!flowState.marketingConsent?.email && !flowState.marketingConsent?.sms ? '—' : ''}
+                     </span>
+                   </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.stateRow}>
+                    <span className={styles.stateLabel}>Org.nr:</span>
+                    <span className={styles.stateValue}>{flowState.orgNr || '—'}</span>
+                  </div>
+                  <div className={styles.stateRow}>
+                    <span className={styles.stateLabel}>Företag:</span>
+                    <span className={styles.stateValue}>{flowState.companyName || '—'}</span>
+                  </div>
+                  <div className={styles.stateRow}>
+                    <span className={styles.stateLabel}>Anläggningar:</span>
+                    <span className={styles.stateValue}>{flowState.facilityCount} st</span>
+                  </div>
+                  <div className={styles.stateRow}>
+                    <span className={styles.stateLabel}>Förbrukning:</span>
+                    <span className={styles.stateValue}>{flowState.totalConsumption} kWh</span>
+                  </div>
+                </>
+              )}
             </div>
           </section>
 

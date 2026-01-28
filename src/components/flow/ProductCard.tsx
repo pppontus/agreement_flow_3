@@ -10,16 +10,24 @@ interface ProductWithPrice extends Product {
 interface ProductCardProps {
   product: Product;
   onSelect: () => void;
+  showVat?: boolean;
 }
 
-export const ProductCard = ({ product, onSelect }: ProductCardProps) => {
+export const ProductCard = ({ product, onSelect, showVat = true }: ProductCardProps) => {
+  const displayPrice = showVat 
+    ? product.pricePerKwh 
+    : (product.pricePerKwh ? product.pricePerKwh * 0.8 : undefined);
+
   return (
     <Card className={styles.productCard}>
       <div className={styles.content}>
         <div className={styles.header}>
           <h3 className={styles.name}>{product.name}</h3>
-          {product.pricePerKwh !== undefined && (
-            <span className={styles.price}>{product.pricePerKwh.toFixed(2)} öre/kWh</span>
+          {displayPrice !== undefined && (
+            <div className={styles.priceContainer}>
+              <span className={styles.price}>{displayPrice.toFixed(2)} öre/kWh</span>
+              <span className={styles.vatLabel}>{showVat ? 'inkl. moms' : 'exkl. moms'}</span>
+            </div>
           )}
         </div>
         {product.isDiscounted && (
