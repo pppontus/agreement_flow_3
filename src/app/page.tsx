@@ -5,19 +5,22 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ProductSelection } from "@/components/flow/ProductSelection";
 import { AddressSearch } from "@/components/flow/AddressSearch";
 import { Identification } from "@/components/flow/Identification";
-import { MoveOfferDialog } from "@/components/flow/MoveOfferDialog";
+import { MoveOffer } from "@/components/flow/MoveOffer";
 import { StartDatePicker } from "@/components/flow/StartDatePicker";
 import { ContactForm } from "@/components/flow/ContactForm";
 import { Address, Product, IdMethod } from "@/types";
 import { useFlowState } from '@/hooks/useFlowState';
 import { determineScenario } from '@/services/scenarioService';
+import { detectRegion } from '@/services/regionService';
 import { useDevPanel } from '@/context/DevPanelContext';
+import { PriceConflictResolver } from '@/components/flow/PriceConflictResolver';
 import styles from "./page.module.css";
 
 type FlowStep = 
   | 'PRODUCT_SELECT'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
+  | 'MOVE_OFFER'
   | 'DETAILS'; // Combined Date + Contact
 
 // Internal component to use useSearchParams (requires Suspense boundary or to be in a client page)
@@ -27,11 +30,11 @@ const FlowContent = () => {
   const searchParams = useSearchParams();
   const currentStep = (searchParams.get('step') as FlowStep) || 'PRODUCT_SELECT';
   
-  const { state, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setCustomerDetails } = useFlowState();
+  const { state, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setCustomerDetails, setElomrade } = useFlowState();
   const { state: devState, setCurrentPhase } = useDevPanel();
 
   // Local state for move offer dialog and multi-step interactions
-  const [showMoveOffer, setShowMoveOffer] = useState(false);
+  // Local state for move offer
   const [moveOfferData, setMoveOfferData] = useState<{ currentContractAddress: Address } | null>(null);
   
   // Local state for the DETAILS step to manage substeps (Date -> Contact)
@@ -62,6 +65,18 @@ const FlowContent = () => {
     setCurrentPhase(currentStep);
   }, [currentStep, setCurrentPhase]);
 
+  // Detect region on initial load (if not already set)
+  useEffect(() => {
+    if (isInitialized && !state.elomrade) {
+      detectRegion().then(response => {
+        setElomrade(response.elomrade);
+        console.log('Region detected:', response);
+      }).catch(err => {
+        console.error('Failed to detect region:', err);
+      });
+    }
+  }, [isInitialized, state.elomrade, setElomrade]);
+
   const handleProductSelect = (product: Product) => {
     selectProduct(product);
     goToStep('ADDRESS_SEARCH');
@@ -88,9 +103,9 @@ const FlowContent = () => {
         console.log('Scenario detected:', scenarioResponse);
 
         if (scenarioResponse.scenario === 'FLYTT' && scenarioResponse.currentContractAddress) {
-          // Show move offer dialog
+          // Got to Move Offer step
           setMoveOfferData({ currentContractAddress: scenarioResponse.currentContractAddress });
-          setShowMoveOffer(true);
+          goToStep('MOVE_OFFER');
         } else {
           // Proceed to DETAILS
           goToStep('DETAILS');
@@ -102,7 +117,7 @@ const FlowContent = () => {
   };
 
   const handleMoveChoice = (choice: 'MOVE' | 'NEW') => {
-    setShowMoveOffer(false);
+
     // In a real app we might set a move flag here
     goToStep('DETAILS');
   };
@@ -146,21 +161,31 @@ const FlowContent = () => {
         <AddressSearch 
           onConfirmAddress={handleAddressConfirm}
           onBack={() => goToStep('PRODUCT_SELECT')}
+          suggestedAddress={state.customer.folkbokforing}
         />
       )}
 
       {currentStep === 'IDENTIFY' && (
-        <Identification 
-          onAuthenticated={handleAuthenticated}
-          onBack={() => goToStep('ADDRESS_SEARCH')}
-        />
+        state.isPriceConflict ? (
+          <PriceConflictResolver />
+        ) : (
+          <Identification 
+            onAuthenticated={handleAuthenticated}
+            onBack={() => goToStep('ADDRESS_SEARCH')}
+            // customerName is passed when we have it, but Identification doesn't use it yet (it's for post-auth)
+          />
+        )
       )}
 
       {currentStep === 'DETAILS' && detailsSubStep === 'DATE' && (
         <StartDatePicker 
           onSelectDate={handleDateSelect}
-          onBack={() => goToStep('IDENTIFY')} // Or back to move offer if that existed? keeping simple for now
+          onBack={() => goToStep('IDENTIFY')}
           address={state.valdAdress || undefined}
+          isSwitching={state.scenario === 'BYTE'}
+          productName={state.selectedProduct?.name}
+          isExistingCustomer={state.customer.isExistingCustomer}
+          bindingEndDate={state.customer.contractEndDate || undefined}
         />
       )}
 
@@ -172,12 +197,13 @@ const FlowContent = () => {
         />
       )}
 
-      {showMoveOffer && moveOfferData && state.valdAdress && (
-        <MoveOfferDialog 
+      {currentStep === 'MOVE_OFFER' && moveOfferData && state.valdAdress && (
+        <MoveOffer 
           currentAddress={moveOfferData.currentContractAddress}
           newAddress={state.valdAdress}
           onMove={() => handleMoveChoice('MOVE')}
           onNew={() => handleMoveChoice('NEW')}
+          onBack={() => goToStep('IDENTIFY')}
         />
       )}
     </>

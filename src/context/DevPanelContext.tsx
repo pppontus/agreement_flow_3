@@ -11,6 +11,7 @@ export type FlowPhase =
   | 'PRODUCT_SELECT'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
+  | 'MOVE_OFFER'
   | 'DETAILS'
   | 'SIGNING';
 

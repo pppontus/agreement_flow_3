@@ -43,6 +43,41 @@
   margin: 0;
 }
 
+/* Confirmation Box Styles */
+.confirmationBox {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.confirmRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.confirmRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.confirmLabel {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.confirmValue {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
 .footer {
   display: flex;
   flex-direction: column;
@@ -54,6 +89,22 @@
 
 .continueButton {
   min-width: 200px;
+}
+
+.secondaryButton {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: var(--space-sm) var(--space-xl);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-text-secondary);
 }
 
 .backLink {

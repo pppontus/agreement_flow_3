@@ -8,6 +8,7 @@ interface CustomerDetails {
   email: string | null;
   phone: string | null;
   folkbokforing: Address | null;
+  contractEndDate?: string | null;
 }
 
 export interface ScenarioResponse {
@@ -95,7 +96,8 @@ const doScenarioDetermination = async (
           name: 'Stanna Kvarsson',
           email: 'stanna@example.com',
           phone: '070-2222222',
-          folkbokforing: selectedAddress
+          folkbokforing: selectedAddress,
+          contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 months binding
         },
         currentContractAddress: selectedAddress
       };

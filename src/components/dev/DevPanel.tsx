@@ -18,6 +18,8 @@ const ADDRESS_OPTIONS: { value: MockAddressResult; label: string; description: s
   { value: 'ERROR', label: 'API-fel', description: 'Simulerat nätverksfel' },
 ];
 
+// ELOMRADE_OPTIONS removed
+
 const PHASE_LABELS: Record<FlowPhase, string> = {
   'PRODUCT_SELECT': 'Produktval',
   'ADDRESS_SEARCH': 'Adresssökning',
@@ -34,7 +36,14 @@ export const DevPanel = () => {
     setMockScenario, 
     setMockAddressResult 
   } = useDevPanel();
-  const { state: flowState } = useFlowState();
+  const { state: flowState, resetState } = useFlowState();
+
+  const handleResetAll = () => {
+    resetState();
+    clearLogs();
+    sessionStorage.clear();
+    window.location.href = window.location.pathname;
+  };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -70,7 +79,16 @@ export const DevPanel = () => {
       {/* Main panel */}
       <div className={`${styles.panel} ${devState.isOpen ? styles.open : ''}`}>
         <div className={styles.header}>
-          <h2 className={styles.title}>🔧 Backend & State</h2>
+          <div className={styles.headerTop}>
+            <h2 className={styles.title}>🔧 Backend & State</h2>
+            <button 
+              className={styles.resetButton} 
+              onClick={handleResetAll}
+              title="Återställ all data och börja om"
+            >
+              Återställ
+            </button>
+          </div>
           <p className={styles.subtitle}>
             Steg: <strong>{PHASE_LABELS[currentPhase] || currentPhase}</strong>
           </p>
@@ -150,6 +168,10 @@ export const DevPanel = () => {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>📊 Sparad data</h3>
             <div className={styles.stateBox}>
+              <div className={styles.stateRow}>
+                <span className={styles.stateLabel}>Elområde:</span>
+                <span className={styles.stateValue}>{flowState.elomrade || '—'}</span>
+              </div>
               <div className={styles.stateRow}>
                 <span className={styles.stateLabel}>Produkt:</span>
                 <span className={styles.stateValue}>{flowState.selectedProduct?.name || '—'}</span>

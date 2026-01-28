@@ -76,6 +76,32 @@
   color: var(--color-text-secondary);
 }
 
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.resetButton {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-family: inherit;
+  color: #dc2626;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.resetButton:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
 .content {
   flex: 1;
   overflow-y: auto;

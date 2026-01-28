@@ -11,9 +11,10 @@ import styles from './AddressSearch.module.css';
 interface AddressSearchProps {
   onConfirmAddress: (address: Address, apartmentDetails?: { number: string, co?: string }) => void;
   onBack?: () => void;
+  suggestedAddress?: Address | null;
 }
 
-export const AddressSearch = ({ onConfirmAddress, onBack }: AddressSearchProps) => {
+export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: AddressSearchProps) => {
   const { state: devState } = useDevPanel();
   
   const [query, setQuery] = useState('');
@@ -30,8 +31,22 @@ export const AddressSearch = ({ onConfirmAddress, onBack }: AddressSearchProps) 
   const [aptError, setAptError] = useState('');
 
   useEffect(() => {
+    // If we have a suggested address and haven't interacted yet, pre-fill it
+    if (suggestedAddress && !hasSearched && !selectedAddress && query === '') {
+      handleSelect(suggestedAddress);
+    }
+  }, [suggestedAddress]);
+
+  useEffect(() => {
     const search = async () => {
-      if (query.length < 2 || selectedAddress) {
+      // Don't search if we just selected an address (query matches selected)
+      if (selectedAddress && query === formatAddress(selectedAddress)) {
+        setResults([]);
+        setShowList(false);
+        return;
+      }
+
+      if (query.length < 2) {
         setResults([]);
         setHasSearched(false);
         setShowList(false);
@@ -39,7 +54,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack }: AddressSearchProps) 
       }
 
       setIsLoading(true);
-      // Pass mock override if DevPanel is open
+      // Pass mock overrides if DevPanel is open
       const mockOverride = devState.isOpen ? devState.mockAddressResult : undefined;
       const addresses = await searchAddresses(query, mockOverride);
       setResults(addresses);
@@ -89,8 +104,11 @@ export const AddressSearch = ({ onConfirmAddress, onBack }: AddressSearchProps) 
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Var ska elen levereras?</h2>
-        <p className={styles.subtitle}>Skriv in adressen där du vill ha elavtal</p>
       </div>
+
+
+
+      {!selectedAddress && <p className={styles.subtitle}>Eller sök efter adressen där du vill ha elavtal</p>}
 
       <div className={styles.searchWrapper}>
         <Input
@@ -116,7 +134,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack }: AddressSearchProps) 
                   >
                     <span className={styles.address}>{formatAddress(addr)}</span>
                     <span className={styles.type}>
-                      {addr.type === 'LGH' ? 'Lägenhet' : 'Villa'}
+                      {addr.type === 'LGH' ? 'Lägenhet' : 'Villa'} {addr.elomrade ? `/ ${addr.elomrade}` : ''}
                     </span>
                   </button>
                 </li>

@@ -3,8 +3,9 @@
 import { ProductCard } from './ProductCard';
 import { Select } from '@/components/ui/Select';
 import { getProductsForRegion } from '@/services/mockData';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Product } from '@/types';
+import { useFlowState } from '@/hooks/useFlowState';
 import styles from './ProductSelection.module.css';
 
 interface ProductSelectionProps {
@@ -12,12 +13,24 @@ interface ProductSelectionProps {
 }
 
 export const ProductSelection = ({ onProductSelect }: ProductSelectionProps) => {
-  // Local UI state for region
-  const [region, setLocalRegion] = useState('SE3');
+  const { state, setElomrade } = useFlowState();
+  
+  // Use elomrade from state, fallback to SE3
+  const [region, setLocalRegion] = useState(state.elomrade || 'SE3');
+  
+  // Sync local region when state.elomrade changes (e.g., after API detection)
+  useEffect(() => {
+    if (state.elomrade && state.elomrade !== region) {
+      setLocalRegion(state.elomrade);
+    }
+  }, [state.elomrade]);
+  
   const products = getProductsForRegion(region);
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalRegion(e.target.value);
+    const newRegion = e.target.value as 'SE1' | 'SE2' | 'SE3' | 'SE4';
+    setLocalRegion(newRegion);
+    setElomrade(newRegion); // Persist to state
   };
 
   const handleSelectProduct = (product: any) => {

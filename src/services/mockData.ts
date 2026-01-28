@@ -47,7 +47,17 @@ export const REGIONAL_PRICES: Record<string, Record<string, number>> = {
 
 export const getProductsForRegion = (region: string) => {
   const prices = REGIONAL_PRICES[region] || REGIONAL_PRICES['SE3']; // Default to SE3
-  return PRODUCTS.map(product => ({
+  
+  // Filter products based on region availability
+  // Fastpris (FAST) is only available in SE3 and SE4
+  const availableProducts = PRODUCTS.filter(product => {
+    if (product.type === 'FAST' && (region === 'SE1' || region === 'SE2')) {
+      return false;
+    }
+    return true;
+  });
+  
+  return availableProducts.map(product => ({
     ...product,
     pricePerKwh: prices[product.id],
   }));

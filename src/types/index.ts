@@ -8,13 +8,17 @@ export type Address = {
   postalCode: string;
   city: string;
   type?: 'LGH' | 'VILLA' | 'UNKNOWN';
+  elomrade?: 'SE1' | 'SE2' | 'SE3' | 'SE4';
 };
+
+export type Elomrade = 'SE1' | 'SE2' | 'SE3' | 'SE4';
 
 export type CaseState = {
   // Meta
   caseId: string | null;
   entryPoint: EntryPoint;
   scenario: Scenario;
+  elomrade: Elomrade | null;
 
   // Address Context
   valdAdress: Address | null;
@@ -34,6 +38,7 @@ export type CaseState = {
     email: string | null;
     phone: string | null;
     folkbokforing: Address | null;
+    contractEndDate?: string | null; // ISO Date YYYY-MM-DD
   };
 
   // Product & Price
@@ -58,6 +63,7 @@ export type Product = {
   name: string;
   type: 'FAST' | 'RORLIGT' | 'KVARTS';
   description: string;
+  pricePerKwh?: number;
 };
 
 export type StopReason = 

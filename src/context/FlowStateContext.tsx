@@ -1,12 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { CaseState, Product, Address, IdMethod, Scenario } from '@/types';
+import { CaseState, Product, Address, IdMethod, Scenario, Elomrade } from '@/types';
 
 const INITIAL_STATE: CaseState = {
   caseId: null,
   entryPoint: 'PRODUCT_FIRST',
   scenario: 'UNKNOWN',
+  elomrade: null,
   valdAdress: null,
   addressDetails: {
     boendeform: null,
@@ -43,6 +44,8 @@ interface FlowStateContextType {
   setAuthenticated: (pnr: string, method: IdMethod) => void;
   setCustomerScenario: (scenario: Scenario, customer: any) => void;
   setCustomerDetails: (details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => void;
+  setElomrade: (elomrade: Elomrade) => void;
+  resolvePriceConflict: () => void;
   resetState: () => void;
 }
 
@@ -92,15 +95,31 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
   }, [updateState]);
 
   const setAddress = useCallback((address: Address, apartmentDetails?: { number: string | null, co: string | null }) => {
-    updateState({
-      valdAdress: address,
-      addressDetails: {
-        boendeform: address.type === 'LGH' ? 'lägenhet' : 'villa',
-        apartmentNumber: apartmentDetails?.number || null,
-        co: apartmentDetails?.co || null,
+    // Check for price conflict (if address region differs from detected region)
+    // If detected region matches address region, no conflict.
+    // If address has no region data, assume no conflict (fallback).
+    let isConflict = false;
+    
+    setState(prev => {
+      // Logic inside setter to access latest state
+      if (address.elomrade && prev.elomrade && address.elomrade !== prev.elomrade) {
+        isConflict = true;
       }
+      
+      return {
+        ...prev,
+        valdAdress: address,
+        // If conflict, update to the actual region of the address
+        elomrade: address.elomrade || prev.elomrade,
+        isPriceConflict: isConflict,
+        addressDetails: {
+          boendeform: address.type === 'LGH' ? 'lägenhet' : 'villa',
+          apartmentNumber: apartmentDetails?.number || null,
+          co: apartmentDetails?.co || null,
+        }
+      };
     });
-  }, [updateState]);
+  }, []);
 
   const setAuthenticated = useCallback((pnr: string, method: IdMethod) => {
     updateState({
@@ -137,6 +156,14 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     setState(INITIAL_STATE);
   }, []);
 
+  const setElomrade = useCallback((elomrade: Elomrade) => {
+    updateState({ elomrade });
+  }, [updateState]);
+
+  const resolvePriceConflict = useCallback(() => {
+    updateState({ isPriceConflict: false });
+  }, [updateState]);
+
   return (
     <FlowStateContext.Provider value={{ 
       state, 
@@ -146,6 +173,8 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       setAuthenticated, 
       setCustomerScenario,
       setCustomerDetails,
+      setElomrade,
+      resolvePriceConflict,
       resetState 
     }}>
       {children}

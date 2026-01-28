@@ -17,6 +17,10 @@ interface ContactFormProps {
 export const ContactForm = ({ initialData, onConfirm, onBack }: ContactFormProps) => {
   const [email, setEmail] = useState(initialData?.email || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
+  
+  // New state for confirmation mode
+  const [isConfirming, setIsConfirming] = useState(!!(initialData?.email && initialData?.phone));
+  
   const [errors, setErrors] = useState<{ email?: string; phone?: string }>({});
 
   const validate = (): boolean => {
@@ -45,6 +49,46 @@ export const ContactForm = ({ initialData, onConfirm, onBack }: ContactFormProps
       onConfirm({ email, phone });
     }
   };
+
+  // If in confirmation mode
+  if (isConfirming) {
+    return (
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <h2 className={styles.title}>Stämmer dina uppgifter?</h2>
+          <p className={styles.subtitle}>
+            Vi behöver bekräfta dina kontaktuppgifter.
+          </p>
+        </header>
+
+        <div className={styles.confirmationBox}>
+          <div className={styles.confirmRow}>
+            <span className={styles.confirmLabel}>E-post:</span>
+            <span className={styles.confirmValue}>{email}</span>
+          </div>
+          <div className={styles.confirmRow}>
+            <span className={styles.confirmLabel}>Mobil:</span>
+            <span className={styles.confirmValue}>{phone}</span>
+          </div>
+        </div>
+
+        <div className={styles.footer}>
+          <Button 
+            onClick={handleSubmit} 
+            className={styles.continueButton}
+          >
+            Ja, fortsätt
+          </Button>
+          <button 
+            className={styles.secondaryButton} 
+            onClick={() => setIsConfirming(false)}
+          >
+            Nej, ändra uppgifter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
