@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FacilityLoop } from '@/components/company/FacilityLoop';
 import { Facility } from '@/types/company';
 import { CompanyGatekeeper } from '@/components/company/CompanyGatekeeper';
 import { CompanySearch } from '@/components/company/CompanySearch';
-import { useFlowState } from '@/hooks/useFlowState';
 import { CompanyLookupResult } from '@/services/companyService';
 
 import { ProductSelection } from '@/components/flow/ProductSelection';
 import { Product } from '@/types';
 
-type CompanyStep = 'PRODUCT_SELECT' | 'GATEKEEPER' | 'SEARCH' | 'FACILITIES_LOOP';
+export type CompanyStep = 'PRODUCT_SELECT' | 'GATEKEEPER' | 'SEARCH' | 'FACILITIES_LOOP';
 
-export const CompanyFlow = () => {
+interface CompanyFlowProps {
+  onStepChange?: (step: CompanyStep) => void;
+}
+
+export const CompanyFlow = ({ onStepChange }: CompanyFlowProps) => {
   const [step, setStep] = useState<CompanyStep>('PRODUCT_SELECT');
-  const { state: rawState } = useFlowState();
 
   // Temporary local state until we wire up context setters in Phase 3
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -42,6 +44,10 @@ export const CompanyFlow = () => {
     // For now we just stay here to show verification
     console.log('Facilities configured:', facilities);
   };
+
+  useEffect(() => {
+    onStepChange?.(step);
+  }, [step, onStepChange]);
 
   return (
     <>
