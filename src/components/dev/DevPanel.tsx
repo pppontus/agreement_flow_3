@@ -7,9 +7,9 @@ import styles from './DevPanel.module.css';
 // Phase-specific mock options
 const SCENARIO_OPTIONS: { value: MockScenarioType; label: string; description: string }[] = [
   { value: 'NY_KUND', label: 'Ny kund', description: 'Kunden finns inte i systemet' },
-  { value: 'FLYTT', label: 'Flyttar', description: 'Befintlig kund med avtal på annan adress' },
-  { value: 'BYTE', label: 'Byter avtal', description: 'Befintlig kund med bindningstid' },
-  { value: 'BYTE_NO_BINDING', label: 'Byter avtal (utan bindning)', description: 'Befintlig kund utan bindningstid' },
+  { value: 'FLYTT', label: 'Befintlig kund på annan adress', description: 'Kunden har ett befintligt avtal på en annan adress' },
+  { value: 'BYTE', label: 'Kund med avtal på angiven adress', description: 'Befintlig kund med bindningstid' },
+  { value: 'BYTE_NO_BINDING', label: 'Kund med avtal på angiven adress', description: 'Befintlig kund utan bindningstid' },
   { value: 'RANDOM', label: 'Automatiskt', description: 'Baserat på personnummer' },
 ];
 
@@ -72,6 +72,9 @@ export const DevPanel = () => {
   const currentPhase = devState.currentPhase;
   const showAddressMock = currentPhase === 'ADDRESS_SEARCH';
   const showScenarioMock = currentPhase === 'IDENTIFY';
+  const showMarketingConsentMock =
+    showScenarioMock &&
+    devState.mockScenario !== 'NY_KUND';
 
   return (
     <>
@@ -166,30 +169,34 @@ export const DevPanel = () => {
                   ))}
                 </div>
 
-                <p className={styles.sectionDesc}>
-                  Vad ska CRM returnera för samtycke?
-                </p>
-                <div className={styles.scenarioOptions}>
-                  {MARKETING_CONSENT_OPTIONS.map(opt => (
-                    <label
-                      key={opt.value}
-                      className={`${styles.scenarioOption} ${devState.mockMarketingConsent === opt.value ? styles.selected : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="mockMarketingConsent"
-                        value={opt.value}
-                        checked={devState.mockMarketingConsent === opt.value}
-                        onChange={() => setMockMarketingConsent(opt.value)}
-                        className={styles.radio}
-                      />
-                      <div className={styles.optionText}>
-                        <span className={styles.optionLabel}>{opt.label}</span>
-                        <span className={styles.optionDesc}>{opt.description}</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                {showMarketingConsentMock && (
+                  <>
+                    <p className={styles.sectionDesc}>
+                      Vad ska CRM returnera för samtycke?
+                    </p>
+                    <div className={styles.scenarioOptions}>
+                      {MARKETING_CONSENT_OPTIONS.map(opt => (
+                        <label
+                          key={opt.value}
+                          className={`${styles.scenarioOption} ${devState.mockMarketingConsent === opt.value ? styles.selected : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="mockMarketingConsent"
+                            value={opt.value}
+                            checked={devState.mockMarketingConsent === opt.value}
+                            onChange={() => setMockMarketingConsent(opt.value)}
+                            className={styles.radio}
+                          />
+                          <div className={styles.optionText}>
+                            <span className={styles.optionLabel}>{opt.label}</span>
+                            <span className={styles.optionDesc}>{opt.description}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
 

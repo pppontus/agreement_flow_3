@@ -137,15 +137,15 @@ export const ProductSelection = ({
 
       <div className={styles.grid}>
         {displayedProducts.map((product) => {
-          const isDisabled = isFastprisLikelyUnavailable(product);
+          const isRestricted = isFastprisLikelyUnavailable(product);
           return (
           <ProductCard 
             key={product.id} 
             product={product} 
             onSelect={() => handleSelectProduct(product)}
             showVat={!isCompany}
-            isActionDisabled={isDisabled}
-            disabledMessage={isDisabled ? 'Avtalet verkar inte tillgängligt i ditt område.' : undefined}
+            isActionRestricted={isRestricted}
+            restrictedMessage={isRestricted ? 'Avtalet verkar inte tillgängligt i ditt område.' : undefined}
           />
           );
         })}

@@ -11,16 +11,16 @@ interface ProductCardProps {
   product: Product;
   onSelect: () => void;
   showVat?: boolean;
-  isActionDisabled?: boolean;
-  disabledMessage?: string;
+  isActionRestricted?: boolean;
+  restrictedMessage?: string;
 }
 
 export const ProductCard = ({
   product,
   onSelect,
   showVat = true,
-  isActionDisabled = false,
-  disabledMessage,
+  isActionRestricted = false,
+  restrictedMessage,
 }: ProductCardProps) => {
   const displayPrice = showVat 
     ? product.pricePerKwh 
@@ -47,15 +47,14 @@ export const ProductCard = ({
       </div>
       <div className={styles.footer}>
         <Button 
-          variant="primary" 
+          variant={isActionRestricted ? 'secondary' : 'primary'}
           fullWidth 
-          disabled={isActionDisabled}
           onClick={onSelect}
         >
           Teckna
         </Button>
-        {isActionDisabled && disabledMessage && (
-          <p className={styles.disabledMessage}>{disabledMessage}</p>
+        {isActionRestricted && restrictedMessage && (
+          <p className={styles.disabledMessage}>{restrictedMessage}</p>
         )}
       </div>
     </Card>
