@@ -41,7 +41,7 @@ export const ProductSelection = ({
   }, [privateState?.elomrade]);
   
   // Pass isCompany to getProductsForRegion
-  const allProducts = getProductsForRegion(region, isCompany);
+  const allProducts = getProductsForRegion(region, isCompany, true);
   const standardProducts = allProducts.filter(p => !p.isDiscounted);
   const discountedProducts = allProducts.filter(p => p.isDiscounted);
   

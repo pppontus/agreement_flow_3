@@ -8,7 +8,7 @@ import { useFlowState } from '@/hooks/useFlowState';
 import { useDevPanel } from '@/context/DevPanelContext';
 import styles from "./page.module.css";
 
-const FlowOrchestrator = () => {
+const FlowOrchestratorContent = () => {
   const searchParams = useSearchParams();
   const { state, setCustomerType, isInitialized } = useFlowState();
   const { state: devState } = useDevPanel();
@@ -55,6 +55,14 @@ const FlowOrchestrator = () => {
         {!isCompany ? <PrivateFlow /> : <CompanyFlow onStepChange={setCompanyStep} />}
       </Suspense>
     </main>
+  );
+};
+
+const FlowOrchestrator = () => {
+  return (
+    <Suspense fallback={<div>Laddar...</div>}>
+      <FlowOrchestratorContent />
+    </Suspense>
   );
 };
 

@@ -88,7 +88,11 @@ export const REGIONAL_PRICES: Record<string, Record<string, number>> = {
   },
 };
 
-export const getProductsForRegion = (region: string, isCompany = false) => {
+export const getProductsForRegion = (
+  region: string,
+  isCompany = false,
+  includeRestrictedFast = false
+) => {
   const prices = REGIONAL_PRICES[region] || REGIONAL_PRICES['SE3']; // Default to SE3
   
   const availableProducts = PRODUCTS.filter(product => {
@@ -102,6 +106,11 @@ export const getProductsForRegion = (region: string, isCompany = false) => {
     
     // Private logic: Hide CompanyOnly
     if (product.isCompanyOnly) return false;
+    // Restrict fixed price in SE1/SE2 unless explicitly included for UI preview
+    if (product.type === 'FAST' && (region === 'SE1' || region === 'SE2')) {
+      return includeRestrictedFast;
+    }
+
     return true;
   });
   
