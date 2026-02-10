@@ -25,6 +25,7 @@ const INITIAL_PRIVATE_STATE: PrivateCaseState = {
     email: null,
     phone: null,
     folkbokforing: null,
+    marketingConsent: { email: false, sms: false },
   },
   selectedProduct: null,
   isPriceConflict: false,
@@ -169,9 +170,11 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...prev,
         scenario,
+        marketingConsent: customer.marketingConsent || { email: false, sms: false },
         customer: {
           ...customer,
           folkbokforing: customer.folkbokforing || null, 
+          marketingConsent: customer.marketingConsent || { email: false, sms: false },
         }
       };
     });

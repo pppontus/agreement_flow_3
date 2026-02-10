@@ -1,6 +1,6 @@
 "use client";
 
-import { useDevPanel, MockScenarioType, MockAddressResult, FlowPhase } from '@/context/DevPanelContext';
+import { useDevPanel, MockScenarioType, MockAddressResult, MockMarketingConsentType, FlowPhase } from '@/context/DevPanelContext';
 import { useFlowState } from '@/hooks/useFlowState';
 import styles from './DevPanel.module.css';
 
@@ -17,6 +17,11 @@ const ADDRESS_OPTIONS: { value: MockAddressResult; label: string; description: s
   { value: 'FOUND', label: 'Hitta adresser', description: 'Normalt sökresultat' },
   { value: 'NONE', label: 'Inga träffar', description: 'Returnerar tom lista' },
   { value: 'ERROR', label: 'API-fel', description: 'Simulerat nätverksfel' },
+];
+
+const MARKETING_CONSENT_OPTIONS: { value: MockMarketingConsentType; label: string; description: string }[] = [
+  { value: 'HAS_CONSENT', label: 'Kund med samtycke för mail/SMS', description: 'CRM returnerar att samtycke redan finns' },
+  { value: 'NO_CONSENT', label: 'Kund utan samtycke för mail/SMS', description: 'CRM returnerar att samtycke saknas' },
 ];
 
 // ELOMRADE_OPTIONS removed
@@ -39,6 +44,7 @@ export const DevPanel = () => {
     togglePanel, 
     clearLogs, 
     setMockScenario, 
+    setMockMarketingConsent,
     setMockAddressResult 
   } = useDevPanel();
   const { state: flowState, resetState } = useFlowState();
@@ -150,6 +156,31 @@ export const DevPanel = () => {
                         value={opt.value}
                         checked={devState.mockScenario === opt.value}
                         onChange={() => setMockScenario(opt.value)}
+                        className={styles.radio}
+                      />
+                      <div className={styles.optionText}>
+                        <span className={styles.optionLabel}>{opt.label}</span>
+                        <span className={styles.optionDesc}>{opt.description}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <p className={styles.sectionDesc}>
+                  Vad ska CRM returnera för samtycke?
+                </p>
+                <div className={styles.scenarioOptions}>
+                  {MARKETING_CONSENT_OPTIONS.map(opt => (
+                    <label
+                      key={opt.value}
+                      className={`${styles.scenarioOption} ${devState.mockMarketingConsent === opt.value ? styles.selected : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="mockMarketingConsent"
+                        value={opt.value}
+                        checked={devState.mockMarketingConsent === opt.value}
+                        onChange={() => setMockMarketingConsent(opt.value)}
                         className={styles.radio}
                       />
                       <div className={styles.optionText}>

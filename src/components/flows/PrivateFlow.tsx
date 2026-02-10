@@ -102,7 +102,8 @@ export const PrivateFlow = () => {
     if (state.valdAdress) {
       try {
         const mockOverride = devState.isOpen ? devState.mockScenario : undefined;
-        const scenarioResponse = await determineScenario(pnr, state.valdAdress, mockOverride);
+        const mockMarketingConsent = devState.isOpen ? devState.mockMarketingConsent : undefined;
+        const scenarioResponse = await determineScenario(pnr, state.valdAdress, mockOverride, mockMarketingConsent);
         
         if (scenarioResponse.customer.isExistingCustomer && method === 'MANUAL_PNR') {
           setPendingScenarioResponse(scenarioResponse);
@@ -301,6 +302,8 @@ export const PrivateFlow = () => {
           onConfirm={handleTermsConfirm}
           onBack={handleBack}
           requiresFacilityId={state.scenario !== 'BYTE'}
+          existingMarketingConsent={state.customer.marketingConsent}
+          initialMarketingConsent={state.marketingConsent}
         />
       )}
 

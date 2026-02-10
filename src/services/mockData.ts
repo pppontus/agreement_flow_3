@@ -102,11 +102,6 @@ export const getProductsForRegion = (region: string, isCompany = false) => {
     
     // Private logic: Hide CompanyOnly
     if (product.isCompanyOnly) return false;
-
-    // Existing Fixed price restriction logic for Nothern regions (SE1/SE2)
-    if (product.type === 'FAST' && (region === 'SE1' || region === 'SE2')) {
-      return false;
-    }
     return true;
   });
   

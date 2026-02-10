@@ -46,6 +46,8 @@ export const ProductSelection = ({
   const discountedProducts = allProducts.filter(p => p.isDiscounted);
   
   const displayedProducts = showDiscounts ? discountedProducts : standardProducts;
+  const isFastprisLikelyUnavailable = (product: Product) =>
+    product.type === 'FAST' && (region === 'SE1' || region === 'SE2');
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newRegion = e.target.value as 'SE1' | 'SE2' | 'SE3' | 'SE4';
@@ -134,14 +136,19 @@ export const ProductSelection = ({
       </div>
 
       <div className={styles.grid}>
-        {displayedProducts.map((product) => (
+        {displayedProducts.map((product) => {
+          const isDisabled = isFastprisLikelyUnavailable(product);
+          return (
           <ProductCard 
             key={product.id} 
             product={product} 
             onSelect={() => handleSelectProduct(product)}
             showVat={!isCompany}
+            isActionDisabled={isDisabled}
+            disabledMessage={isDisabled ? 'Avtalet verkar inte tillgängligt i ditt område.' : undefined}
           />
-        ))}
+          );
+        })}
       </div>
 
       {!hasSelectedAddress && (

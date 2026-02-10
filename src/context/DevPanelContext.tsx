@@ -25,6 +25,10 @@ export type MockScenarioType =
   | 'BYTE_NO_BINDING'   // Existing customer without binding
   | 'RANDOM';           // Default random
 
+export type MockMarketingConsentType =
+  | 'HAS_CONSENT'
+  | 'NO_CONSENT';
+
 export type MockAddressResult = 
   | 'FOUND'             // Normal results
   | 'NONE'              // No results
@@ -42,6 +46,7 @@ interface DevPanelState {
   currentPhase: FlowPhase;
   // Mock selections per phase
   mockScenario: MockScenarioType;
+  mockMarketingConsent: MockMarketingConsentType;
   mockAddressResult: MockAddressResult;
   mockSigningResult: MockSigningResult;
 }
@@ -52,6 +57,7 @@ interface DevPanelContextType {
   clearLogs: () => void;
   setCurrentPhase: (phase: FlowPhase) => void;
   setMockScenario: (scenario: MockScenarioType) => void;
+  setMockMarketingConsent: (consent: MockMarketingConsentType) => void;
   setMockAddressResult: (result: MockAddressResult) => void;
   setMockSigningResult: (result: MockSigningResult) => void;
 }
@@ -68,6 +74,7 @@ export const useDevPanel = () => {
         apiLogs: [], 
         currentPhase: 'PRODUCT_SELECT' as FlowPhase,
         mockScenario: 'RANDOM' as MockScenarioType, 
+        mockMarketingConsent: 'HAS_CONSENT' as MockMarketingConsentType,
         mockAddressResult: 'FOUND' as MockAddressResult,
         mockSigningResult: 'SUCCESS' as MockSigningResult,
       },
@@ -75,6 +82,7 @@ export const useDevPanel = () => {
       clearLogs: () => {},
       setCurrentPhase: () => {},
       setMockScenario: () => {},
+      setMockMarketingConsent: () => {},
       setMockAddressResult: () => {},
       setMockSigningResult: () => {},
     };
@@ -88,6 +96,7 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
     apiLogs: [],
     currentPhase: 'PRODUCT_SELECT',
     mockScenario: 'RANDOM',
+    mockMarketingConsent: 'HAS_CONSENT',
     mockAddressResult: 'FOUND',
     mockSigningResult: 'SUCCESS',
   });
@@ -119,6 +128,10 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
     setState(prev => ({ ...prev, mockScenario: scenario }));
   }, []);
 
+  const setMockMarketingConsent = useCallback((consent: MockMarketingConsentType) => {
+    setState(prev => ({ ...prev, mockMarketingConsent: consent }));
+  }, []);
+
   const setMockAddressResult = useCallback((result: MockAddressResult) => {
     setState(prev => ({ ...prev, mockAddressResult: result }));
   }, []);
@@ -134,6 +147,7 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
       clearLogs, 
       setCurrentPhase,
       setMockScenario, 
+      setMockMarketingConsent,
       setMockAddressResult,
       setMockSigningResult,
     }}>

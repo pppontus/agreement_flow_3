@@ -13,17 +13,28 @@ interface TermsConsentProps {
   }) => void;
   onBack: () => void;
   requiresFacilityId?: boolean; // If true, show facility ID section (e.g. for moves)
+  existingMarketingConsent?: { email: boolean; sms: boolean };
+  initialMarketingConsent?: { email: boolean; sms: boolean };
 }
 
-export const TermsConsent = ({ onConfirm, onBack, requiresFacilityId = false }: TermsConsentProps) => {
+export const TermsConsent = ({
+  onConfirm,
+  onBack,
+  requiresFacilityId = false,
+  existingMarketingConsent = { email: false, sms: false },
+  initialMarketingConsent = { email: false, sms: false },
+}: TermsConsentProps) => {
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [marketingEmail, setMarketingEmail] = useState(false);
-  const [marketingSms, setMarketingSms] = useState(false);
+  const [marketingEmail, setMarketingEmail] = useState(initialMarketingConsent.email);
+  const [marketingSms, setMarketingSms] = useState(initialMarketingConsent.sms);
   
   // Facility ID logic
   const [fetchFacilityId, setFetchFacilityId] = useState(true);
   const [manualFacilityId, setManualFacilityId] = useState('');
   const [facilityIdError, setFacilityIdError] = useState('');
+  const hasExistingEmailConsent = existingMarketingConsent.email;
+  const hasExistingSmsConsent = existingMarketingConsent.sms;
+  const showMarketingOptions = !hasExistingEmailConsent || !hasExistingSmsConsent;
 
   const handleContinue = () => {
     if (requiresFacilityId && !fetchFacilityId && !manualFacilityId) {
@@ -34,7 +45,11 @@ export const TermsConsent = ({ onConfirm, onBack, requiresFacilityId = false }: 
     if (termsAccepted) {
       onConfirm({
         termsAccepted,
-        marketing: { email: marketingEmail, sms: marketingSms },
+        marketing: {
+          // Existing CRM consent is preserved and cannot be removed in the UI.
+          email: hasExistingEmailConsent || marketingEmail,
+          sms: hasExistingSmsConsent || marketingSms,
+        },
         facilityId: requiresFacilityId ? {
           fetch: fetchFacilityId,
           value: !fetchFacilityId ? manualFacilityId : undefined
@@ -108,36 +123,43 @@ export const TermsConsent = ({ onConfirm, onBack, requiresFacilityId = false }: 
         </label>
       </div>
 
-      <div className={styles.divider}></div>
+      {showMarketingOptions && (
+        <>
+          <div className={styles.divider}></div>
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Håll dig uppdaterad (Valfritt)</h3>
+            <p className={styles.sectionDesc}>
+              Få smarta energitips och erbjudanden från Bixia.
+            </p>
+            
+            <div className={styles.marketingOptions}>
+              {!hasExistingEmailConsent && (
+                <label className={styles.marketingLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={marketingEmail} 
+                    onChange={(e) => setMarketingEmail(e.target.checked)}
+                    className={styles.checkbox}
+                  />
+                  <span>E-post</span>
+                </label>
+              )}
 
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Håll dig uppdaterad (Valfritt)</h3>
-        <p className={styles.sectionDesc}>
-          Få smarta energitips och erbjudanden från Bixia.
-        </p>
-        
-        <div className={styles.marketingOptions}>
-          <label className={styles.marketingLabel}>
-            <input 
-              type="checkbox" 
-              checked={marketingEmail} 
-              onChange={(e) => setMarketingEmail(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <span>E-post</span>
-          </label>
-
-          <label className={styles.marketingLabel}>
-            <input 
-              type="checkbox" 
-              checked={marketingSms} 
-              onChange={(e) => setMarketingSms(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <span>SMS</span>
-          </label>
-        </div>
-      </div>
+              {!hasExistingSmsConsent && (
+                <label className={styles.marketingLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={marketingSms} 
+                    onChange={(e) => setMarketingSms(e.target.checked)}
+                    className={styles.checkbox}
+                  />
+                  <span>SMS</span>
+                </label>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className={styles.footer}>
         <Button 

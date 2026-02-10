@@ -43,6 +43,7 @@ export type PrivateCaseState = {
     phone: string | null;
     folkbokforing: Address | null;
     contractEndDate?: string | null; // ISO Date YYYY-MM-DD
+    marketingConsent: { email: boolean; sms: boolean };
   };
 
   // Product & Price

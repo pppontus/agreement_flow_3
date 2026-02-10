@@ -11,9 +11,17 @@ interface ProductCardProps {
   product: Product;
   onSelect: () => void;
   showVat?: boolean;
+  isActionDisabled?: boolean;
+  disabledMessage?: string;
 }
 
-export const ProductCard = ({ product, onSelect, showVat = true }: ProductCardProps) => {
+export const ProductCard = ({
+  product,
+  onSelect,
+  showVat = true,
+  isActionDisabled = false,
+  disabledMessage,
+}: ProductCardProps) => {
   const displayPrice = showVat 
     ? product.pricePerKwh 
     : (product.pricePerKwh ? product.pricePerKwh * 0.8 : undefined);
@@ -41,10 +49,14 @@ export const ProductCard = ({ product, onSelect, showVat = true }: ProductCardPr
         <Button 
           variant="primary" 
           fullWidth 
+          disabled={isActionDisabled}
           onClick={onSelect}
         >
           Teckna
         </Button>
+        {isActionDisabled && disabledMessage && (
+          <p className={styles.disabledMessage}>{disabledMessage}</p>
+        )}
       </div>
     </Card>
   );

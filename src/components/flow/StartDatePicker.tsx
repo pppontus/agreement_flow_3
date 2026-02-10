@@ -43,6 +43,7 @@ export const StartDatePicker = ({
 
   const today = new Date().toISOString().split('T')[0];
   const earliest = getEarliestDate();
+  const hasConfirmedNoBinding = isSwitching && isExistingCustomer && !bindingEndDate;
 
   const handleContinue = () => {
     if (mode === 'EARLIEST') {
@@ -120,7 +121,9 @@ export const StartDatePicker = ({
               </span>
               <span className={styles.choiceDesc}>
                 {isSwitching 
-                  ? `Vi startar bytet omgående (ca ${earliest}). Kontrollera att du inte har bindningstid kvar.` 
+                  ? hasConfirmedNoBinding
+                    ? `Vi startar bytet omgående (ca ${earliest}).`
+                    : `Vi startar bytet omgående (ca ${earliest}). Kontrollera att du inte har bindningstid kvar.`
                   : `Vi startar avtalet så snart det går (ca ${earliest}).`
                 }
               </span>

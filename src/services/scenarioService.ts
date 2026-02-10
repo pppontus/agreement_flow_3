@@ -1,6 +1,6 @@
 import { Address, Scenario } from '@/types';
 import { loggedApiCall } from './apiClient';
-import { MockScenarioType } from '@/context/DevPanelContext';
+import { MockScenarioType, MockMarketingConsentType } from '@/context/DevPanelContext';
 
 interface CustomerDetails {
   isExistingCustomer: boolean;
@@ -9,6 +9,10 @@ interface CustomerDetails {
   phone: string | null;
   folkbokforing: Address | null;
   contractEndDate?: string | null;
+  marketingConsent: {
+    email: boolean;
+    sms: boolean;
+  };
 }
 
 export interface ScenarioResponse {
@@ -20,13 +24,21 @@ export interface ScenarioResponse {
 // Mock addresses
 const ADDR_STHLM: Address = { street: 'Birger Jarlsgatan', number: '10', postalCode: '11145', city: 'Stockholm', type: 'LGH' };
 
+const getMockMarketingConsent = (override?: MockMarketingConsentType) => {
+  if (override === 'NO_CONSENT') {
+    return { email: false, sms: false };
+  }
+  return { email: true, sms: true };
+};
+
 /**
  * Internal scenario determination logic
  */
 const doScenarioDetermination = async (
   pnr: string, 
   selectedAddress: Address,
-  mockScenarioOverride?: MockScenarioType
+  mockScenarioOverride?: MockScenarioType,
+  mockMarketingConsentOverride?: MockMarketingConsentType
 ): Promise<ScenarioResponse> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -74,7 +86,8 @@ const doScenarioDetermination = async (
           name: 'Ny Kundsson',
           email: null,
           phone: null,
-          folkbokforing: { ...selectedAddress }
+          folkbokforing: { ...selectedAddress },
+          marketingConsent: { email: false, sms: false }
         }
       };
 
@@ -86,7 +99,8 @@ const doScenarioDetermination = async (
           name: 'Flytt Flyttsson',
           email: 'flytt@example.com',
           phone: '070-1111111',
-          folkbokforing: ADDR_STHLM
+          folkbokforing: ADDR_STHLM,
+          marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
         currentContractAddress: ADDR_STHLM
       };
@@ -100,7 +114,8 @@ const doScenarioDetermination = async (
           email: 'stanna@example.com',
           phone: '070-2222222',
           folkbokforing: selectedAddress,
-          contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 months binding
+          contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 months binding
+          marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
         currentContractAddress: selectedAddress
       };
@@ -114,7 +129,8 @@ const doScenarioDetermination = async (
           email: 'stanna.utan@example.com',
           phone: '070-3333333',
           folkbokforing: selectedAddress,
-          contractEndDate: null // No binding
+          contractEndDate: null, // No binding
+          marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
         currentContractAddress: selectedAddress
       };
@@ -127,7 +143,8 @@ const doScenarioDetermination = async (
           name: 'Sven Svensson',
           email: null,
           phone: null,
-          folkbokforing: null
+          folkbokforing: null,
+          marketingConsent: { email: false, sms: false }
         }
       };
   }
@@ -141,7 +158,8 @@ const doScenarioDetermination = async (
 export const determineScenario = async (
   pnr: string, 
   selectedAddress: Address,
-  mockScenarioOverride?: MockScenarioType
+  mockScenarioOverride?: MockScenarioType,
+  mockMarketingConsentOverride?: MockMarketingConsentType
 ): Promise<ScenarioResponse> => {
   return loggedApiCall(
     '/api/scenario/determine',
@@ -149,8 +167,9 @@ export const determineScenario = async (
     { 
       personnummer: pnr.substring(0, 8) + '****', // Mask last 4 digits
       address: selectedAddress, 
-      mockOverride: mockScenarioOverride 
+      mockOverride: mockScenarioOverride,
+      mockMarketingConsent: mockMarketingConsentOverride,
     },
-    () => doScenarioDetermination(pnr, selectedAddress, mockScenarioOverride)
+    () => doScenarioDetermination(pnr, selectedAddress, mockScenarioOverride, mockMarketingConsentOverride)
   );
 };
