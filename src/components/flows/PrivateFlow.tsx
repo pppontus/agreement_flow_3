@@ -13,7 +13,7 @@ import { RiskInfo } from "@/components/flow/RiskInfo";
 import { SigningFlow } from "@/components/flow/SigningFlow";
 import { Confirmation } from "@/components/flow/Confirmation";
 import { AppDownloadPrompt } from "@/components/flow/AppDownloadPrompt";
-import { Address, Product, IdMethod } from "@/types";
+import { Address, Product, IdMethod, PrivateCaseState } from "@/types";
 import { useFlowState } from '@/hooks/useFlowState';
 import { determineScenario } from '@/services/scenarioService';
 import { detectRegion } from '@/services/regionService';
@@ -33,21 +33,41 @@ type FlowStep =
   | 'CONFIRMATION'
   | 'APP_DOWNLOAD';
 
+const FLOW_STEPS: FlowStep[] = [
+  'PRODUCT_SELECT',
+  'ADDRESS_SEARCH',
+  'IDENTIFY',
+  'MOVE_OFFER',
+  'DETAILS',
+  'TERMS',
+  'RISK_INFO',
+  'SIGNING',
+  'CONFIRMATION',
+  'APP_DOWNLOAD',
+];
+
+const isValidFlowStep = (step: string | null): step is FlowStep => {
+  if (!step) return false;
+  return FLOW_STEPS.includes(step as FlowStep);
+};
+
 export const PrivateFlow = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentStep = (searchParams.get('step') as FlowStep) || 'PRODUCT_SELECT';
+  const stepParam = searchParams.get('step');
+  const currentStep: FlowStep = isValidFlowStep(stepParam) ? stepParam : 'PRODUCT_SELECT';
   
   const { state: rawState, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setCustomerDetails, setElomrade, setConsents, resetState } = useFlowState();
   const { state: devState, setCurrentPhase } = useDevPanel();
+  const isPrivateFlow = rawState.customerType === 'PRIVATE';
+  const state = rawState as PrivateCaseState;
+  const selectedProduct = isPrivateFlow ? rawState.selectedProduct : null;
+  const scenario = isPrivateFlow ? rawState.scenario : 'UNKNOWN';
+  const selectedAddress = isPrivateFlow ? rawState.valdAdress : null;
+  const folkbokforingAddress = isPrivateFlow ? rawState.customer.folkbokforing : null;
+  const elomrade = isPrivateFlow ? rawState.elomrade : null;
 
-  if (rawState.customerType !== 'PRIVATE') return null;
-  const state = rawState;
-
-  // Local state for move offer
-  const [moveOfferData, setMoveOfferData] = useState<{ currentContractAddress: Address } | null>(null);
-  
   // Local state for the DETAILS step to manage substeps (Date -> Contact)
   const [detailsSubStep, setDetailsSubStep] = useState<'DATE' | 'CONTACT'>('DATE');
   const [tempDateData, setTempDateData] = useState<{date: string, mode: 'EARLIEST' | 'SPECIFIC'} | null>(null);
@@ -66,13 +86,38 @@ export const PrivateFlow = () => {
 
   // Hydration check: If at a later step but missing state, redirect to start
   useEffect(() => {
+    if (!isPrivateFlow) return;
+
     if (isInitialized) {
-      if (currentStep !== 'PRODUCT_SELECT' && !state.selectedProduct) {
+      if (stepParam && !isValidFlowStep(stepParam)) {
+        console.log(`Invalid step "${stepParam}", restarting flow`);
+        goToStep('PRODUCT_SELECT');
+        return;
+      }
+
+      if (currentStep !== 'PRODUCT_SELECT' && !selectedProduct) {
         console.log('Missing flow state, restarting flow');
         goToStep('PRODUCT_SELECT');
       }
+
+      if (
+        currentStep === 'MOVE_OFFER' &&
+        (scenario !== 'FLYTT' || !selectedAddress || !folkbokforingAddress)
+      ) {
+        console.log('Missing move offer state, returning to identify');
+        goToStep('IDENTIFY');
+      }
     }
-  }, [isInitialized, currentStep, state.selectedProduct]);
+  }, [
+    isPrivateFlow,
+    isInitialized,
+    currentStep,
+    selectedProduct,
+    scenario,
+    selectedAddress,
+    folkbokforingAddress,
+    stepParam,
+  ]);
 
   // Sync current step to DevPanel
   useEffect(() => {
@@ -81,14 +126,14 @@ export const PrivateFlow = () => {
 
   // Detect region on initial load
   useEffect(() => {
-    if (isInitialized && !state.elomrade) {
+    if (isPrivateFlow && isInitialized && !elomrade) {
       detectRegion().then(response => {
         setElomrade(response.elomrade);
       }).catch(err => {
         console.error('Failed to detect region:', err);
       });
     }
-  }, [isInitialized, state.elomrade, setElomrade]);
+  }, [isPrivateFlow, isInitialized, elomrade, setElomrade]);
 
   const handleProductSelect = (product: Product) => {
     selectProduct(product);
@@ -122,7 +167,6 @@ export const PrivateFlow = () => {
         setCustomerScenario(finalResponse.scenario, finalResponse.customer);
 
         if (finalResponse.scenario === 'FLYTT' && finalResponse.currentContractAddress) {
-          setMoveOfferData({ currentContractAddress: finalResponse.currentContractAddress });
           goToStep('MOVE_OFFER');
         } else {
           goToStep('DETAILS');
@@ -204,7 +248,7 @@ export const PrivateFlow = () => {
         if (detailsSubStep === 'CONTACT') {
           setDetailsSubStep('DATE');
         } else {
-          if (state.scenario === 'FLYTT' && moveOfferData) {
+          if (state.scenario === 'FLYTT' && state.customer.folkbokforing && state.valdAdress) {
             goToStep('MOVE_OFFER');
           } else {
             goToStep('IDENTIFY');
@@ -249,7 +293,7 @@ export const PrivateFlow = () => {
     }
   }, [currentStep, enteredFromForward]);
 
-  if (!isInitialized) return null;
+  if (!isPrivateFlow || !isInitialized) return null;
 
   return (
     <>
@@ -301,9 +345,9 @@ export const PrivateFlow = () => {
         />
       )}
 
-      {currentStep === 'MOVE_OFFER' && moveOfferData && state.valdAdress && (
+      {currentStep === 'MOVE_OFFER' && state.customer.folkbokforing && state.valdAdress && (
         <MoveOffer 
-          currentAddress={moveOfferData.currentContractAddress}
+          currentAddress={state.customer.folkbokforing}
           newAddress={state.valdAdress}
           onMove={handleMoveChoice}
           onNew={handleMoveChoice}
