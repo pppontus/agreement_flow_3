@@ -16,7 +16,8 @@ export type FlowPhase =
   | 'TERMS'
   | 'RISK_INFO'
   | 'SIGNING'
-  | 'CONFIRMATION';
+  | 'CONFIRMATION'
+  | 'APP_DOWNLOAD';
 
 export type MockScenarioType = 
   | 'NY_KUND'           // New customer

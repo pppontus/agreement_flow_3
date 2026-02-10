@@ -1,0 +1,142 @@
+.container {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+  animation: fadeIn var(--transition-normal);
+}
+
+.icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--space-sm);
+}
+
+.header {
+  margin-bottom: var(--space-xl);
+}
+
+.title {
+  margin-bottom: var(--space-xs);
+}
+
+.subtitle {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.selectionSummary {
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  padding: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.summaryTitle {
+  margin-bottom: var(--space-xs);
+}
+
+.summaryText {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.priceBox {
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.priceTitle {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-xs);
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  margin-bottom: 6px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.mobileActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.qrGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.qrCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  padding: var(--space-md);
+}
+
+.qrTitle {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-sm);
+}
+
+.qrImage {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto var(--space-sm);
+  display: block;
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  font-size: var(--font-size-sm);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.backLink {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 760px) {
+  .qrGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -12,12 +12,14 @@ import { TermsConsent } from "@/components/flow/TermsConsent";
 import { RiskInfo } from "@/components/flow/RiskInfo";
 import { SigningFlow } from "@/components/flow/SigningFlow";
 import { Confirmation } from "@/components/flow/Confirmation";
-import { Address, Product, IdMethod, PrivateCaseState } from "@/types";
+import { AppDownloadPrompt } from "@/components/flow/AppDownloadPrompt";
+import { Address, Product, IdMethod } from "@/types";
 import { useFlowState } from '@/hooks/useFlowState';
 import { determineScenario } from '@/services/scenarioService';
 import { detectRegion } from '@/services/regionService';
 import { useDevPanel } from '@/context/DevPanelContext';
 import { PriceConflictResolver } from '@/components/flow/PriceConflictResolver';
+import { ExtraServicesSelection, saveExtraServicesSelection } from '@/services/extraServicesService';
 
 type FlowStep = 
   | 'PRODUCT_SELECT'
@@ -28,7 +30,8 @@ type FlowStep =
   | 'TERMS'
   | 'RISK_INFO'
   | 'SIGNING'
-  | 'CONFIRMATION';
+  | 'CONFIRMATION'
+  | 'APP_DOWNLOAD';
 
 export const PrivateFlow = () => {
   const router = useRouter();
@@ -52,6 +55,7 @@ export const PrivateFlow = () => {
   // Security: Track when BankID-only verification is required
   const [requireBankIdVerification, setRequireBankIdVerification] = useState(false);
   const [pendingScenarioResponse, setPendingScenarioResponse] = useState<any>(null);
+  const [extraServicesSelection, setExtraServicesSelection] = useState<ExtraServicesSelection | null>(null);
 
   // Navigation helper
   const goToStep = (step: FlowStep) => {
@@ -129,7 +133,7 @@ export const PrivateFlow = () => {
     }
   };
 
-  const handleMoveChoice = (choice: 'MOVE' | 'NEW') => {
+  const handleMoveChoice = () => {
     goToStep('DETAILS');
   };
 
@@ -173,7 +177,14 @@ export const PrivateFlow = () => {
     goToStep('CONFIRMATION');
   };
 
+  const handleExtrasSelectionsSubmit = async (selection: ExtraServicesSelection) => {
+    await saveExtraServicesSelection('ORD-123456', selection);
+    setExtraServicesSelection(selection);
+    goToStep('APP_DOWNLOAD');
+  };
+
   const handleConfirmationReset = () => {
+    setExtraServicesSelection(null);
     resetState();
     router.push(pathname);
   };
@@ -216,6 +227,9 @@ export const PrivateFlow = () => {
         break;
       case 'CONFIRMATION':
         goToStep('SIGNING');
+        break;
+      case 'APP_DOWNLOAD':
+        goToStep('CONFIRMATION');
         break;
       default:
         console.warn('Unknown step for back navigation');
@@ -291,8 +305,8 @@ export const PrivateFlow = () => {
         <MoveOffer 
           currentAddress={moveOfferData.currentContractAddress}
           newAddress={state.valdAdress}
-          onMove={() => handleMoveChoice('MOVE')}
-          onNew={() => handleMoveChoice('NEW')}
+          onMove={handleMoveChoice}
+          onNew={handleMoveChoice}
           onBack={handleBack}
         />
       )}
@@ -328,7 +342,17 @@ export const PrivateFlow = () => {
           product={state.selectedProduct || undefined}
           address={state.valdAdress || undefined}
           email={state.customer.email || undefined}
-          onReset={handleConfirmationReset}
+          initialSelection={extraServicesSelection}
+          onSubmitSelections={handleExtrasSelectionsSubmit}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'APP_DOWNLOAD' && (
+        <AppDownloadPrompt
+          selection={extraServicesSelection}
+          onDone={handleConfirmationReset}
+          onBack={handleBack}
         />
       )}
     </>

@@ -36,6 +36,7 @@ const PHASE_LABELS: Record<FlowPhase, string> = {
   'RISK_INFO': 'Riskinformation',
   'SIGNING': 'Signering',
   'CONFIRMATION': 'Kvittens',
+  'APP_DOWNLOAD': 'Appnedladdning',
 };
 
 export const DevPanel = () => {

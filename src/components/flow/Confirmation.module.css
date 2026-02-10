@@ -1,6 +1,6 @@
 .container {
   width: 100%;
-  max-width: 500px;
+  max-width: 620px;
   animation: popIn var(--transition-normal);
   text-align: center;
   margin: 0 auto;
@@ -9,7 +9,6 @@
 .iconWrapper {
   font-size: 4rem;
   margin-bottom: var(--space-md);
-  animation: bounce In 1s;
 }
 
 .header {
@@ -18,7 +17,7 @@
 
 .title {
   margin: 0 0 var(--space-xs) 0;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .subtitle {
@@ -60,10 +59,106 @@
   font-size: var(--font-size-sm);
 }
 
+.extrasSection {
+  text-align: left;
+  margin-bottom: var(--space-xl);
+}
+
+.extrasTitle {
+  margin-bottom: var(--space-xs);
+}
+
+.extrasSubtitle {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-md);
+}
+
+.contactMeSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.serviceCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.serviceHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox {
+  margin-top: 2px;
+}
+
+.serviceTitle {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.serviceDescription {
+  margin-top: var(--space-xs);
+  margin-left: 24px;
+  font-size: var(--font-size-sm);
+}
+
+.priceLine {
+  margin-top: var(--space-xs);
+  margin-left: 24px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.areaSelect {
+  margin-top: var(--space-md);
+  margin-left: 24px;
+}
+
+.contactMeTitle {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.contactMeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.contactMeText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  color: #b91c1c;
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-sm);
+  text-align: left;
+}
+
 .actions {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+}
+
+.backLink {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
 }
 
 @keyframes popIn {
