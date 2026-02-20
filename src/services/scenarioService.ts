@@ -1,4 +1,4 @@
-import { Address, ContactInterestServiceId, Scenario, ScenarioCustomer } from '@/types';
+import { Address, ContactInterestServiceId, Scenario, ScenarioCustomer, StopReason } from '@/types';
 import { loggedApiCall } from './apiClient';
 import { MockScenarioType, MockMarketingConsentType, MockExistingExtrasType } from '@/context/DevPanelContext';
 
@@ -6,6 +6,7 @@ export interface ScenarioResponse {
   scenario: Scenario;
   customer: ScenarioCustomer;
   currentContractAddress?: Address; // For move scenarios
+  stopReason?: StopReason;
 }
 
 // Mock addresses
@@ -44,6 +45,24 @@ const getMockExistingExtras = (override?: MockExistingExtrasType): NonNullable<S
   };
 };
 
+const buildDefaultCustomer = (selectedAddress: Address): ScenarioCustomer => ({
+  isExistingCustomer: false,
+  name: 'Ny Kundsson',
+  email: null,
+  phone: null,
+  folkbokforing: { ...selectedAddress },
+  facilityId: null,
+  marketingConsent: { email: false, sms: false },
+});
+
+const hashToScenarioIndex = (input: string) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+};
+
 /**
  * Internal scenario determination logic
  */
@@ -60,9 +79,16 @@ const doScenarioDetermination = async (
   const normalizedPnr = pnr.replace(/\D/g, '');
 
   // Determine which scenario to use
-  let effectiveScenario: 'NY' | 'FLYTT' | 'BYTE' | 'BYTE_NO_BINDING' = 'NY';
+  let effectiveScenario:
+    | 'NY'
+    | 'FLYTT'
+    | 'BYTE'
+    | 'BYTE_NO_BINDING'
+    | 'EXISTING_SAME_CONTRACT'
+    | 'STOPP_CANNOT_DELIVER'
+    = 'NY';
 
-  if (mockScenarioOverride && mockScenarioOverride !== 'RANDOM') {
+  if (mockScenarioOverride && mockScenarioOverride !== 'AUTO_DETERMINISTIC') {
     switch (mockScenarioOverride) {
       case 'NY_KUND':
         effectiveScenario = 'NY';
@@ -76,17 +102,25 @@ const doScenarioDetermination = async (
       case 'BYTE_NO_BINDING':
         effectiveScenario = 'BYTE_NO_BINDING';
         break;
+      case 'BEFINTLIG_ADRESS_SAMMA_AVTAL':
+        effectiveScenario = 'EXISTING_SAME_CONTRACT';
+        break;
+      case 'STOPP_KAN_INTE_LEVERERA':
+        effectiveScenario = 'STOPP_CANNOT_DELIVER';
+        break;
     }
   } else {
-    // Use PNR-based logic (original behavior)
-    if (normalizedPnr.endsWith('0000')) {
-      effectiveScenario = 'NY';
-    } else if (normalizedPnr.endsWith('1111')) {
+    // Deterministic "auto" mode: no randomness, same input => same scenario.
+    const key = `${normalizedPnr}-${selectedAddress.postalCode}-${selectedAddress.street}-${selectedAddress.number}`;
+    const bucket = hashToScenarioIndex(key) % 5;
+    if (bucket === 0) {
       effectiveScenario = 'FLYTT';
-    } else if (normalizedPnr.endsWith('2222')) {
+    } else if (bucket === 1) {
       effectiveScenario = 'BYTE';
+    } else if (bucket === 2) {
+      effectiveScenario = 'BYTE_NO_BINDING';
     } else {
-      effectiveScenario = 'NY'; // Default
+      effectiveScenario = 'NY';
     }
   }
 
@@ -95,15 +129,7 @@ const doScenarioDetermination = async (
     case 'NY':
       return {
         scenario: 'NY',
-        customer: {
-          isExistingCustomer: false,
-          name: 'Ny Kundsson',
-          email: null,
-          phone: null,
-          folkbokforing: { ...selectedAddress },
-          facilityId: null,
-          marketingConsent: { email: false, sms: false }
-        }
+        customer: buildDefaultCustomer(selectedAddress),
       };
 
     case 'FLYTT':
@@ -156,18 +182,34 @@ const doScenarioDetermination = async (
         currentContractAddress: selectedAddress
       };
 
+    case 'EXISTING_SAME_CONTRACT':
+      return {
+        scenario: 'EXTRA',
+        customer: {
+          isExistingCustomer: true,
+          name: 'Stanna Kvarsson',
+          email: 'stanna@example.com',
+          phone: '070-2222222',
+          folkbokforing: selectedAddress,
+          facilityId: '735999222222222222',
+          extraServices: getMockExistingExtras(mockExistingExtrasOverride),
+          contractEndDate: null,
+          marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
+        },
+        currentContractAddress: selectedAddress,
+      };
+
+    case 'STOPP_CANNOT_DELIVER':
+      return {
+        scenario: 'NY',
+        customer: buildDefaultCustomer(selectedAddress),
+        stopReason: 'CANNOT_DELIVER',
+      };
+
     default:
       return {
         scenario: 'NY',
-        customer: {
-          isExistingCustomer: false,
-          name: 'Sven Svensson',
-          email: null,
-          phone: null,
-          folkbokforing: null,
-          facilityId: null,
-          marketingConsent: { email: false, sms: false }
-        }
+        customer: buildDefaultCustomer(selectedAddress),
       };
   }
 };

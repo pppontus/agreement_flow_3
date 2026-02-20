@@ -12,6 +12,8 @@ export type FlowPhase =
   | 'PRODUCT_CLARIFY'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
+  | 'FLOW_STOP'
+  | 'EXISTING_CONTRACT_EXTRAS'
   | 'MOVE_OFFER'
   | 'DETAILS'
   | 'TERMS'
@@ -27,7 +29,9 @@ export type MockScenarioType =
   | 'FLYTT'             // Move
   | 'BYTE'              // Extension/switch with binding
   | 'BYTE_NO_BINDING'   // Existing customer without binding
-  | 'RANDOM';           // Default random
+  | 'STOPP_KAN_INTE_LEVERERA' // Simulated stop: cannot deliver
+  | 'BEFINTLIG_ADRESS_SAMMA_AVTAL' // Existing customer already has same agreement on address
+  | 'AUTO_DETERMINISTIC'; // Default auto mode, deterministic from input
 
 export type MockMarketingConsentType =
   | 'HAS_CONSENT'
@@ -97,7 +101,7 @@ export const useDevPanel = () => {
         isOpen: false, 
         apiLogs: [], 
         currentPhase: 'PRODUCT_SELECT' as FlowPhase,
-        mockScenario: 'RANDOM' as MockScenarioType, 
+        mockScenario: 'AUTO_DETERMINISTIC' as MockScenarioType, 
         mockMarketingConsent: 'HAS_CONSENT' as MockMarketingConsentType,
         mockExistingExtras: DEFAULT_MOCK_EXISTING_EXTRAS,
         mockAddressResult: 'FOUND' as MockAddressResult,
@@ -121,7 +125,7 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
     isOpen: false,
     apiLogs: [],
     currentPhase: 'PRODUCT_SELECT',
-    mockScenario: 'RANDOM',
+    mockScenario: 'AUTO_DETERMINISTIC',
     mockMarketingConsent: 'HAS_CONSENT',
     mockExistingExtras: DEFAULT_MOCK_EXISTING_EXTRAS,
     mockAddressResult: 'FOUND',

@@ -5,6 +5,8 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ProductSelection } from "@/components/flow/ProductSelection";
 import { AddressSearch } from "@/components/flow/AddressSearch";
 import { Identification } from "@/components/flow/Identification";
+import { FlowStop } from "@/components/flow/FlowStop";
+import { ExistingContractExtrasIntro } from "@/components/flow/ExistingContractExtrasIntro";
 import { MoveOffer } from "@/components/flow/MoveOffer";
 import { StartDatePicker } from "@/components/flow/StartDatePicker";
 import { ContactForm } from "@/components/flow/ContactForm";
@@ -15,7 +17,7 @@ import { ExtraOfferBixiaNara } from "@/components/flow/ExtraOfferBixiaNara";
 import { ExtraOfferRealtimeMeter } from "@/components/flow/ExtraOfferRealtimeMeter";
 import { ExtraOfferContactMe } from "@/components/flow/ExtraOfferContactMe";
 import { AppDownloadPrompt } from "@/components/flow/AppDownloadPrompt";
-import { Address, FacilityHandling, Product, IdMethod, PrivateCaseState, Invoice } from "@/types";
+import { Address, FacilityHandling, Product, IdMethod, PrivateCaseState, Invoice, StopReason } from "@/types";
 import { useFlowState } from '@/hooks/useFlowState';
 import { determineScenario, ScenarioResponse } from '@/services/scenarioService';
 import { detectRegion } from '@/services/regionService';
@@ -28,6 +30,8 @@ type FlowStep =
   | 'PRODUCT_CLARIFY'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
+  | 'FLOW_STOP'
+  | 'EXISTING_CONTRACT_EXTRAS'
   | 'MOVE_OFFER'
   | 'DETAILS'
   | 'TERMS'
@@ -43,6 +47,8 @@ const FLOW_STEPS: FlowStep[] = [
   'PRODUCT_CLARIFY',
   'ADDRESS_SEARCH',
   'IDENTIFY',
+  'FLOW_STOP',
+  'EXISTING_CONTRACT_EXTRAS',
   'MOVE_OFFER',
   'DETAILS',
   'TERMS',
@@ -82,6 +88,7 @@ export const PrivateFlow = () => {
   const selectedProduct = isPrivateFlow ? rawState.selectedProduct : null;
   const isGenericProductSelected = selectedProduct?.id === 'GENERIC';
   const scenario = isPrivateFlow ? rawState.scenario : 'UNKNOWN';
+  const isExistingSameContractScenario = scenario === 'EXTRA';
   const selectedAddress = isPrivateFlow ? rawState.valdAdress : null;
   const folkbokforingAddress = isPrivateFlow ? rawState.customer.folkbokforing : null;
   const elomrade = isPrivateFlow ? rawState.elomrade : null;
@@ -131,6 +138,7 @@ export const PrivateFlow = () => {
   const [requireBankIdVerification, setRequireBankIdVerification] = useState(false);
   const [pendingScenarioResponse, setPendingScenarioResponse] = useState<ScenarioResponse | null>(null);
   const [extraServicesSelection, setExtraServicesSelection] = useState<ExtraServicesSelection | null>(null);
+  const [flowStopReason, setFlowStopReason] = useState<StopReason | null>(null);
 
   // Navigation helper
   const goToStep = useCallback((step: FlowStep) => {
@@ -168,6 +176,14 @@ export const PrivateFlow = () => {
         console.log('Missing move offer state, returning to identify');
         goToStep('IDENTIFY');
       }
+
+      if (currentStep === 'FLOW_STOP' && !flowStopReason) {
+        goToStep('IDENTIFY');
+      }
+
+      if (currentStep === 'EXISTING_CONTRACT_EXTRAS' && scenario !== 'EXTRA') {
+        goToStep('IDENTIFY');
+      }
     }
   }, [
     isPrivateFlow,
@@ -177,6 +193,7 @@ export const PrivateFlow = () => {
     scenario,
     selectedAddress,
     folkbokforingAddress,
+    flowStopReason,
     stepParam,
     goToStep,
   ]);
@@ -254,6 +271,7 @@ export const PrivateFlow = () => {
 
   const handleAddressConfirm = (address: Address, apartmentDetails?: { number: string, co?: string }) => {
     setAddress(address, apartmentDetails ? { number: apartmentDetails.number, co: apartmentDetails.co || null } : undefined);
+    setFlowStopReason(null);
     if (isGenericProductSelected) {
       goToStep('PRODUCT_CLARIFY');
       return;
@@ -287,6 +305,12 @@ export const PrivateFlow = () => {
         setRequireBankIdVerification(false);
         setPendingScenarioResponse(null);
 
+        if (finalResponse.stopReason) {
+          setFlowStopReason(finalResponse.stopReason);
+          goToStep('FLOW_STOP');
+          return;
+        }
+
         setCustomerScenario(finalResponse.scenario, finalResponse.customer);
         if (
           finalResponse.scenario === 'BYTE' &&
@@ -303,6 +327,8 @@ export const PrivateFlow = () => {
 
         if (finalResponse.scenario === 'FLYTT' && finalResponse.currentContractAddress) {
           goToStep('MOVE_OFFER');
+        } else if (finalResponse.scenario === 'EXTRA') {
+          goToStep('EXISTING_CONTRACT_EXTRAS');
         } else {
           setDetailsSubStep('DATE');
           setTempDateData(null);
@@ -389,7 +415,7 @@ export const PrivateFlow = () => {
     };
   };
 
-  const handleConfirmationContinue = () => {
+  const startExtrasSelectionFlow = (skipAppStep: boolean) => {
     if (shouldOfferBixiaNara) {
       goToStep('EXTRA_BIXIA_NARA');
       return;
@@ -398,7 +424,19 @@ export const PrivateFlow = () => {
       goToStep('EXTRA_REALTIME_METER');
       return;
     }
+    if (skipAppStep) {
+      if (shouldOfferAnyContactExtras) {
+        goToStep('EXTRA_CONTACT');
+      } else {
+        handleExtrasDone();
+      }
+      return;
+    }
     goToStep('APP_DOWNLOAD');
+  };
+
+  const handleConfirmationContinue = () => {
+    startExtrasSelectionFlow(false);
   };
 
   const handleBixiaNaraConfirm = (bixiaNara: { selected: boolean; county?: string }) => {
@@ -414,6 +452,12 @@ export const PrivateFlow = () => {
     });
     if (shouldOfferRealtimeMeter) {
       goToStep('EXTRA_REALTIME_METER');
+    } else if (isExistingSameContractScenario) {
+      if (shouldOfferAnyContactExtras) {
+        goToStep('EXTRA_CONTACT');
+      } else {
+        handleExtrasDone();
+      }
     } else {
       goToStep('APP_DOWNLOAD');
     }
@@ -427,6 +471,14 @@ export const PrivateFlow = () => {
         realtimeMeter: { selected },
       };
     });
+    if (isExistingSameContractScenario) {
+      if (shouldOfferAnyContactExtras) {
+        goToStep('EXTRA_CONTACT');
+      } else {
+        handleExtrasDone();
+      }
+      return;
+    }
     goToStep('APP_DOWNLOAD');
   };
 
@@ -454,6 +506,7 @@ export const PrivateFlow = () => {
 
   const handleConfirmationReset = () => {
     setExtraServicesSelection(null);
+    setFlowStopReason(null);
     resetState();
     router.push(pathname);
   };
@@ -473,6 +526,12 @@ export const PrivateFlow = () => {
         break;
       case 'IDENTIFY':
         goToStep('ADDRESS_SEARCH');
+        break;
+      case 'FLOW_STOP':
+        goToStep('IDENTIFY');
+        break;
+      case 'EXISTING_CONTRACT_EXTRAS':
+        goToStep('IDENTIFY');
         break;
       case 'MOVE_OFFER':
         goToStep('IDENTIFY');
@@ -499,17 +558,25 @@ export const PrivateFlow = () => {
         // Confirmation is a completion checkpoint and should not back-navigate.
         break;
       case 'EXTRA_BIXIA_NARA':
-        goToStep('CONFIRMATION');
+        if (isExistingSameContractScenario) {
+          goToStep('EXISTING_CONTRACT_EXTRAS');
+        } else {
+          goToStep('CONFIRMATION');
+        }
         break;
       case 'EXTRA_REALTIME_METER':
         if (shouldOfferBixiaNara) {
           goToStep('EXTRA_BIXIA_NARA');
+        } else if (isExistingSameContractScenario) {
+          goToStep('EXISTING_CONTRACT_EXTRAS');
         } else {
           goToStep('CONFIRMATION');
         }
         break;
       case 'APP_DOWNLOAD':
-        if (shouldOfferRealtimeMeter) {
+        if (isExistingSameContractScenario) {
+          goToStep('EXISTING_CONTRACT_EXTRAS');
+        } else if (shouldOfferRealtimeMeter) {
           goToStep('EXTRA_REALTIME_METER');
         } else if (shouldOfferBixiaNara) {
           goToStep('EXTRA_BIXIA_NARA');
@@ -518,7 +585,17 @@ export const PrivateFlow = () => {
         }
         break;
       case 'EXTRA_CONTACT':
-        goToStep('APP_DOWNLOAD');
+        if (isExistingSameContractScenario) {
+          if (shouldOfferRealtimeMeter) {
+            goToStep('EXTRA_REALTIME_METER');
+          } else if (shouldOfferBixiaNara) {
+            goToStep('EXTRA_BIXIA_NARA');
+          } else {
+            goToStep('EXISTING_CONTRACT_EXTRAS');
+          }
+        } else {
+          goToStep('APP_DOWNLOAD');
+        }
         break;
       default:
         console.warn('Unknown step for back navigation');
@@ -577,6 +654,24 @@ export const PrivateFlow = () => {
             }
           />
         )
+      )}
+
+      {currentStep === 'FLOW_STOP' && flowStopReason && (
+        <FlowStop
+          reason={flowStopReason}
+          onBack={() => goToStep('IDENTIFY')}
+          onRestart={handleConfirmationReset}
+        />
+      )}
+
+      {currentStep === 'EXISTING_CONTRACT_EXTRAS' && (
+        <ExistingContractExtrasIntro
+          productName={state.selectedProduct?.name}
+          hasAnyExtrasToOffer={shouldOfferAnyDirectExtras || shouldOfferAnyContactExtras}
+          onContinue={() => startExtrasSelectionFlow(true)}
+          onDone={handleExtrasDone}
+          onBack={handleBack}
+        />
       )}
 
       {currentStep === 'DETAILS' && detailsSubStep === 'DATE' && (

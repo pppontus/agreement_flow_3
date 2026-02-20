@@ -9,9 +9,11 @@ import styles from './DevPanel.module.css';
 const SCENARIO_OPTIONS: { value: MockScenarioType; label: string; description: string }[] = [
   { value: 'NY_KUND', label: 'Ny kund', description: 'Kunden finns inte i systemet' },
   { value: 'FLYTT', label: 'Befintlig kund på annan adress', description: 'Kunden har ett befintligt avtal på en annan adress' },
-  { value: 'BYTE', label: 'Kund med avtal på angiven adress', description: 'Befintlig kund med bindningstid' },
-  { value: 'BYTE_NO_BINDING', label: 'Kund med avtal på angiven adress', description: 'Befintlig kund utan bindningstid' },
-  { value: 'RANDOM', label: 'Automatiskt', description: 'Baserat på personnummer' },
+  { value: 'BYTE', label: 'Kund med avtal (med bindning)', description: 'Befintlig kund med bindningstid' },
+  { value: 'BYTE_NO_BINDING', label: 'Kund med avtal (utan bindning)', description: 'Befintlig kund utan bindningstid' },
+  { value: 'BEFINTLIG_ADRESS_SAMMA_AVTAL', label: 'Befintlig adress med samma avtal', description: 'Hoppar över avtalssteg och erbjuder extratjänster' },
+  { value: 'STOPP_KAN_INTE_LEVERERA', label: 'Stopp: kan inte leverera', description: 'Simulerat stoppfall för leveranshinder' },
+  { value: 'AUTO_DETERMINISTIC', label: 'Standard (förutsägbart)', description: 'Baserat på personnummer, utan slump' },
 ];
 
 const ADDRESS_OPTIONS: { value: MockAddressResult; label: string; description: string }[] = [
@@ -41,6 +43,8 @@ const PHASE_LABELS: Record<FlowPhase, string> = {
   'PRODUCT_CLARIFY': 'Välj avtalsform',
   'ADDRESS_SEARCH': 'Adresssökning',
   'IDENTIFY': 'Identifiering',
+  'FLOW_STOP': 'Stopp',
+  'EXISTING_CONTRACT_EXTRAS': 'Befintligt avtal',
   'MOVE_OFFER': 'Flyttmatchning',
   'DETAILS': 'Datum & Kontakt',
   'TERMS': 'Villkor',
@@ -87,12 +91,14 @@ export const DevPanel = () => {
   const currentPhase = devState.currentPhase;
   const showAddressMock = currentPhase === 'ADDRESS_SEARCH';
   const showScenarioMock = currentPhase === 'IDENTIFY';
-  const showMarketingConsentMock =
-    showScenarioMock &&
-    devState.mockScenario !== 'NY_KUND';
-  const showExistingExtrasMock =
-    showScenarioMock &&
-    devState.mockScenario !== 'NY_KUND';
+  const shouldShowExistingCustomerMocks =
+    devState.mockScenario === 'FLYTT' ||
+    devState.mockScenario === 'BYTE' ||
+    devState.mockScenario === 'BYTE_NO_BINDING' ||
+    devState.mockScenario === 'BEFINTLIG_ADRESS_SAMMA_AVTAL' ||
+    devState.mockScenario === 'AUTO_DETERMINISTIC';
+  const showMarketingConsentMock = showScenarioMock && shouldShowExistingCustomerMocks;
+  const showExistingExtrasMock = showScenarioMock && shouldShowExistingCustomerMocks;
 
   return (
     <>

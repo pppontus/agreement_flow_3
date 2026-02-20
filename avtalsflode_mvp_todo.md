@@ -190,7 +190,7 @@ Statusnotis extratjänster 2026-02-20:
 
 ## P1 - Bör göras
 
-### [ ] P1.1 Förbättra mockad scenariologik så den känns som CRM utan integration
+### [X] P1.1 Förbättra mockad scenariologik så den känns som CRM utan integration
 
 Problem:
 
@@ -214,16 +214,23 @@ Implementation (MVP-nivå):
 - `BYTE_UTAN_BINDNING`
 - `FLYTT`
 - `STOPP_KAN_INTE_LEVERERA` (simulerat stopp)
-- `DUBBELT_AVTAL` (simulerat stopp)
-- Gör "RANDOM" mer rimlig men deterministisk per session.
+- `BEFINTLIG_ADRESS_SAMMA_AVTAL` (erbjud extratjänster i stället för stopp)
+- Behåll ett förutsägbart autoläge (inte slumpmässigt), deterministiskt per session.
 
 Acceptance criteria:
 
 - Testledare kan snabbt välja scenario och få förväntad UX utan special-PNR.
 
+Status 2026-02-20:
+
+- DevPanel har nu explicita scenarioval för: `NY_KUND`, `FLYTT`, `BYTE`, `BYTE_NO_BINDING`, `BEFINTLIG_ADRESS_SAMMA_AVTAL`, `STOPP_KAN_INTE_LEVERERA` och `AUTO_DETERMINISTIC`.
+- `scenarioService` mappar varje scenario till konsekvent mockdata (kundtyp, bindningstid, kontaktuppgifter, anläggnings-ID, extratjänster).
+- Autoläget är förutsägbart och deterministiskt (ingen slump) baserat på input.
+- Stoppscenarier returneras explicit från scenario-anropet med stopporsak.
+
 ---
 
-### [ ] P1.2 Implementera tydlig stopp-/fallback-skärm för simulerade stoppfall
+### [X] P1.2 Implementera tydlig stopp-/fallback-skärm för simulerade stoppfall
 
 Problem:
 
@@ -248,6 +255,12 @@ Implementation (MVP-nivå):
 Acceptance criteria:
 
 - Inget scenario slutar i tyst fel/logg-only.
+
+Status 2026-02-20:
+
+- Ny komponent `FlowStop` visar stopporsak med tydlig förklaring.
+- `PrivateFlow` routar till stoppvy när scenario-anropet returnerar stopporsak.
+- Stoppvyn har både "Gå tillbaka" och "Börja om".
 
 ---
 
@@ -329,8 +342,8 @@ Etapp A (Måste):
 
 Etapp B (Stabil demo):
 
-- P1.1
-- P1.2
+- [X] P1.1
+- [X] P1.2
 - P1.3
 
 Etapp C (Polish):
@@ -430,12 +443,11 @@ När arbetet lämnas över ska följande finnas:
 
 ## 9) Nästa rekommenderade steg (nu)
 
-Nästa steg: **P1.1 Förbättra mockad scenariologik så den känns som CRM utan integration**.
+Nästa steg: **P1.3 Justera appsteg efter bekräftelse till frivillig del av upplevelsen**.
 
 Viktigt att få med:
 
-- Lägg till explicita mockscenarier i DevPanel, inklusive två stoppfall.
-- Säkerställ att varje scenario ger konsekvent data i `scenarioService` (kundtyp, bindningstid, stopporsak m.m.).
-- Behåll "RANDOM" men gör den deterministisk per session för förutsägbar demo.
-- Visa tydligt i UI när ett stoppfall inträffar och vad nästa steg är för kunden.
-- Verifiera snabb testbarhet: testledare ska kunna välja scenario utan special-PNR.
+- Ge användaren två tydliga val efter bekräftelse: avsluta direkt eller gå via appsteg.
+- Behåll appsteget testbart, men gör det till en sekundär/valfri väg.
+- Säkerställ att extra-tjänstflödet fortfarande fungerar logiskt när appsteget hoppas över.
+- Säkerställ att back-navigation och avslut känns konsekvent i båda vägarna.
