@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Address } from '@/types';
+import { Address, MoveChoice } from '@/types';
 import styles from './StartDatePicker.module.css';
 
 interface StartDatePickerProps {
@@ -10,6 +10,7 @@ interface StartDatePickerProps {
   onBack: () => void;
   address?: Address;
   isSwitching?: boolean;
+  moveChoice?: MoveChoice | null;
   productName?: string;
   isExistingCustomer?: boolean;
   bindingEndDate?: string;
@@ -20,6 +21,7 @@ export const StartDatePicker = ({
   onBack, 
   address, 
   isSwitching, 
+  moveChoice,
   productName,
   isExistingCustomer,
   bindingEndDate
@@ -44,6 +46,8 @@ export const StartDatePicker = ({
   const today = new Date().toISOString().split('T')[0];
   const earliest = getEarliestDate();
   const hasConfirmedNoBinding = isSwitching && isExistingCustomer && !bindingEndDate;
+  const isMoveExisting = moveChoice === 'MOVE_EXISTING';
+  const isNewOnNewAddress = moveChoice === 'NEW_ON_NEW_ADDRESS';
 
   const handleContinue = () => {
     if (mode === 'EARLIEST') {
@@ -65,9 +69,21 @@ export const StartDatePicker = ({
           </>
         ) : (
           <>
-            <h2 className={styles.title}>När ska avtalet starta?</h2>
+            <h2 className={styles.title}>
+              {isMoveExisting
+                ? 'När ska vi flytta ditt avtal?'
+                : isNewOnNewAddress
+                  ? 'När ska det nya avtalet starta?'
+                  : 'När ska avtalet starta?'}
+            </h2>
             <p className={styles.subtitle}>
-              Vi ser till att elen flyter på till <strong>{address?.street} {address?.number}</strong>.
+              {isMoveExisting ? (
+                <>Vi flyttar ditt nuvarande avtal till <strong>{address?.street} {address?.number}</strong>.</>
+              ) : isNewOnNewAddress ? (
+                <>Du tecknar ett extra avtal för <strong>{address?.street} {address?.number}</strong> och behåller avtalet på din tidigare adress.</>
+              ) : (
+                <>Vi ser till att elen flyter på till <strong>{address?.street} {address?.number}</strong>.</>
+              )}
             </p>
           </>
         )}

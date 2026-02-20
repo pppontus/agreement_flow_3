@@ -1,19 +1,6 @@
-import { Address } from '@/types';
+import { Address, Invoice } from '@/types';
 import { loggedApiCall } from './apiClient';
 import { MockAddressResult } from '@/context/DevPanelContext';
-
-// City to elområde mapping (simplified)
-const CITY_TO_ELOMRADE: Record<string, 'SE1' | 'SE2' | 'SE3' | 'SE4'> = {
-  'Luleå': 'SE1',
-  'Umeå': 'SE2',
-  'Sundsvall': 'SE2',
-  'Stockholm': 'SE3',
-  'Uppsala': 'SE3',
-  'Göteborg': 'SE3',
-  'Malmö': 'SE4',
-  'Exempelstad': 'SE3',
-  'Testort': 'SE3',
-};
 
 // Mock addresses for search simulation
 export const MOCK_ADDRESSES: Address[] = [
@@ -60,7 +47,7 @@ const doSearch = async (
   const normalizedQuery = query.toLowerCase();
   
   // 1. Filter hardcoded ones
-  let filtered = MOCK_ADDRESSES.filter(addr => 
+  const filtered = MOCK_ADDRESSES.filter(addr => 
     addr.street.toLowerCase().includes(normalizedQuery) ||
     addr.city.toLowerCase().includes(normalizedQuery) ||
     addr.postalCode.includes(normalizedQuery)
@@ -68,7 +55,7 @@ const doSearch = async (
 
   // 2. Generate dynamic ones for testing if query doesn't match much
   const capitalizedQuery = query.charAt(0).toUpperCase() + query.slice(1);
-  let dynamic: Address[] = [
+  const dynamic: Address[] = [
     { street: `${capitalizedQuery}vägen`, number: '1', postalCode: '97200', city: 'Luleå', type: 'VILLA', elomrade: 'SE1' },
     { street: `${capitalizedQuery}gatan`, number: '2', postalCode: '90300', city: 'Umeå', type: 'LGH', elomrade: 'SE2' },
     { street: `${capitalizedQuery}gränd`, number: '3', postalCode: '11100', city: 'Stockholm', type: 'LGH', elomrade: 'SE3' },
@@ -77,7 +64,7 @@ const doSearch = async (
   ];
 
   // Combine and limit
-  let results = [...filtered, ...dynamic].slice(0, 15); // Show more results to ensure variety
+  const results = [...filtered, ...dynamic].slice(0, 15); // Show more results to ensure variety
   
   return results;
 };
@@ -102,6 +89,23 @@ export const searchAddresses = async (
 // Format address for display
 export const formatAddress = (addr: Address): string => {
   return `${addr.street} ${addr.number}, ${addr.postalCode} ${addr.city}`;
+};
+
+export const formatInvoiceAddress = (invoice: Invoice): string => {
+  if (!invoice.address) return '-';
+
+  const base = formatAddress(invoice.address);
+  const details: string[] = [];
+  if (invoice.apartmentDetails?.number) {
+    details.push(`lgh ${invoice.apartmentDetails.number}`);
+  }
+  if (invoice.apartmentDetails?.co) {
+    details.push(`c/o ${invoice.apartmentDetails.co}`);
+  }
+
+  const detailText = details.length > 0 ? ` (${details.join(', ')})` : '';
+  const changedText = invoice.mode === 'CUSTOM' ? ' (ändrad)' : '';
+  return `${base}${detailText}${changedText}`;
 };
 
 /**
@@ -131,4 +135,3 @@ export const fetchApartmentNumbers = async (address: Address): Promise<string[]>
     }
   );
 };
-

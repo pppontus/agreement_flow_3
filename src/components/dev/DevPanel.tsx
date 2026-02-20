@@ -2,6 +2,7 @@
 
 import { useDevPanel, MockScenarioType, MockAddressResult, MockMarketingConsentType, FlowPhase } from '@/context/DevPanelContext';
 import { useFlowState } from '@/hooks/useFlowState';
+import { formatInvoiceAddress } from '@/services/addressService';
 import styles from './DevPanel.module.css';
 
 // Phase-specific mock options
@@ -24,6 +25,15 @@ const MARKETING_CONSENT_OPTIONS: { value: MockMarketingConsentType; label: strin
   { value: 'NO_CONSENT', label: 'Kund utan samtycke för mail/SMS', description: 'CRM returnerar att samtycke saknas' },
 ];
 
+const EXISTING_EXTRAS_OPTIONS = [
+  { key: 'BIXIA_NARA', label: 'Bixia nära', description: 'Kunden har redan Bixia nära' },
+  { key: 'REALTIME_METER', label: 'Realtidsmätare', description: 'Kunden har redan realtidsmätare' },
+  { key: 'SOLAR', label: 'Solceller', description: 'Kunden har redan solcellslösning' },
+  { key: 'HOME_BATTERY', label: 'Hembatteri', description: 'Kunden har redan hembatteri' },
+  { key: 'CHARGER', label: 'Laddbox', description: 'Kunden har redan laddbox' },
+  { key: 'ATTIC_INSULATION', label: 'Tilläggsisolera vinden', description: 'Kunden har redan tilläggsisolering' },
+] as const;
+
 // ELOMRADE_OPTIONS removed
 
 const PHASE_LABELS: Record<FlowPhase, string> = {
@@ -33,10 +43,12 @@ const PHASE_LABELS: Record<FlowPhase, string> = {
   'MOVE_OFFER': 'Flyttmatchning',
   'DETAILS': 'Datum & Kontakt',
   'TERMS': 'Villkor',
-  'RISK_INFO': 'Riskinformation',
   'SIGNING': 'Signering',
   'CONFIRMATION': 'Kvittens',
+  'EXTRA_BIXIA_NARA': 'Bixia nära',
+  'EXTRA_REALTIME_METER': 'Realtidsmätare',
   'APP_DOWNLOAD': 'Appnedladdning',
+  'EXTRA_CONTACT': 'Kontaktintresse',
 };
 
 export const DevPanel = () => {
@@ -46,6 +58,7 @@ export const DevPanel = () => {
     clearLogs, 
     setMockScenario, 
     setMockMarketingConsent,
+    setMockExistingExtra,
     setMockAddressResult 
   } = useDevPanel();
   const { state: flowState, resetState } = useFlowState();
@@ -61,7 +74,7 @@ export const DevPanel = () => {
     return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const formatJson = (data: any) => {
+  const formatJson = (data: unknown) => {
     try {
       return JSON.stringify(data, null, 2);
     } catch {
@@ -74,6 +87,9 @@ export const DevPanel = () => {
   const showAddressMock = currentPhase === 'ADDRESS_SEARCH';
   const showScenarioMock = currentPhase === 'IDENTIFY';
   const showMarketingConsentMock =
+    showScenarioMock &&
+    devState.mockScenario !== 'NY_KUND';
+  const showExistingExtrasMock =
     showScenarioMock &&
     devState.mockScenario !== 'NY_KUND';
 
@@ -198,6 +214,34 @@ export const DevPanel = () => {
                     </div>
                   </>
                 )}
+
+                {showExistingExtrasMock && (
+                  <>
+                    <p className={styles.sectionDesc}>
+                      Vilka extratjänster har befintlig kund redan?
+                    </p>
+                    <div className={styles.scenarioOptions}>
+                      {EXISTING_EXTRAS_OPTIONS.map(opt => (
+                        <label
+                          key={opt.key}
+                          className={`${styles.scenarioOption} ${devState.mockExistingExtras[opt.key] ? styles.selected : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            name={`mockExistingExtras-${opt.key}`}
+                            checked={devState.mockExistingExtras[opt.key]}
+                            onChange={(e) => setMockExistingExtra(opt.key, e.target.checked)}
+                            className={styles.radio}
+                          />
+                          <div className={styles.optionText}>
+                            <span className={styles.optionLabel}>{opt.label}</span>
+                            <span className={styles.optionDesc}>{opt.description}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
 
@@ -253,6 +297,33 @@ export const DevPanel = () => {
                      <span className={styles.stateValue}>{flowState.scenario}</span>
                    </div>
                    <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Extratj. (CRM):</span>
+                     <span className={styles.stateValue}>
+                       {flowState.customer.extraServices
+                         ? [
+                             flowState.customer.extraServices.bixiaNara.selected
+                               ? `Bixia nära${flowState.customer.extraServices.bixiaNara.county ? ` (${flowState.customer.extraServices.bixiaNara.county})` : ''}`
+                               : null,
+                             flowState.customer.extraServices.realtimeMeter.selected ? 'Realtidsmätare' : null,
+                             ...(flowState.customer.extraServices.contactMeServices ?? []).map((service) => {
+                               switch (service) {
+                                 case 'SOLAR':
+                                   return 'Solceller';
+                                 case 'HOME_BATTERY':
+                                   return 'Hembatteri';
+                                 case 'CHARGER':
+                                   return 'Laddbox';
+                                 case 'ATTIC_INSULATION':
+                                   return 'Tilläggsisolera vinden';
+                                 default:
+                                   return null;
+                               }
+                             }),
+                           ].filter(Boolean).join(', ') || 'Inga'
+                         : '—'}
+                     </span>
+                   </div>
+                   <div className={styles.stateRow}>
                      <span className={styles.stateLabel}>Kund:</span>
                      <span className={styles.stateValue}>{flowState.customer.name || '—'}</span>
                    </div>
@@ -267,6 +338,26 @@ export const DevPanel = () => {
                    <div className={styles.stateRow}>
                      <span className={styles.stateLabel}>Startdatum:</span>
                      <span className={styles.stateValue}>{flowState.startDate || '—'}</span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Fakturaadress:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.invoice?.address
+                         ? formatInvoiceAddress(flowState.invoice)
+                         : '—'}
+                     </span>
+                   </div>
+                   <div className={styles.stateRow}>
+                     <span className={styles.stateLabel}>Anläggnings-ID:</span>
+                     <span className={styles.stateValue}>
+                       {flowState.facilityHandling
+                         ? flowState.facilityHandling.mode === 'MANUAL'
+                           ? (flowState.facilityHandling.facilityId || '—')
+                           : flowState.facilityHandling.mode === 'FROM_CRM'
+                             ? `${flowState.facilityHandling.facilityId || '—'} (CRM)`
+                             : 'Hämtas via fullmakt'
+                         : '—'}
+                     </span>
                    </div>
                    <div className={styles.stateRow}>
                      <span className={styles.stateLabel}>Villkor:</span>

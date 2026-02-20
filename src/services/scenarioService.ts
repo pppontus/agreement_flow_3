@@ -1,23 +1,10 @@
-import { Address, Scenario } from '@/types';
+import { Address, ContactInterestServiceId, Scenario, ScenarioCustomer } from '@/types';
 import { loggedApiCall } from './apiClient';
-import { MockScenarioType, MockMarketingConsentType } from '@/context/DevPanelContext';
-
-interface CustomerDetails {
-  isExistingCustomer: boolean;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  folkbokforing: Address | null;
-  contractEndDate?: string | null;
-  marketingConsent: {
-    email: boolean;
-    sms: boolean;
-  };
-}
+import { MockScenarioType, MockMarketingConsentType, MockExistingExtrasType } from '@/context/DevPanelContext';
 
 export interface ScenarioResponse {
   scenario: Scenario;
-  customer: CustomerDetails;
+  customer: ScenarioCustomer;
   currentContractAddress?: Address; // For move scenarios
 }
 
@@ -31,6 +18,32 @@ const getMockMarketingConsent = (override?: MockMarketingConsentType) => {
   return { email: true, sms: true };
 };
 
+const getMockExistingExtras = (override?: MockExistingExtrasType): NonNullable<ScenarioCustomer['extraServices']> => {
+  const extras = override ?? {
+    BIXIA_NARA: false,
+    REALTIME_METER: false,
+    HOME_BATTERY: false,
+    CHARGER: false,
+    SOLAR: false,
+    ATTIC_INSULATION: false,
+  };
+
+  const contactMeServices: ContactInterestServiceId[] = [
+    extras.HOME_BATTERY ? 'HOME_BATTERY' : null,
+    extras.CHARGER ? 'CHARGER' : null,
+    extras.SOLAR ? 'SOLAR' : null,
+    extras.ATTIC_INSULATION ? 'ATTIC_INSULATION' : null,
+  ].filter((service): service is ContactInterestServiceId => !!service);
+
+  return {
+    bixiaNara: extras.BIXIA_NARA
+      ? { selected: true, county: 'Stockholms län' }
+      : { selected: false },
+    realtimeMeter: { selected: extras.REALTIME_METER },
+    contactMeServices,
+  };
+};
+
 /**
  * Internal scenario determination logic
  */
@@ -38,7 +51,8 @@ const doScenarioDetermination = async (
   pnr: string, 
   selectedAddress: Address,
   mockScenarioOverride?: MockScenarioType,
-  mockMarketingConsentOverride?: MockMarketingConsentType
+  mockMarketingConsentOverride?: MockMarketingConsentType,
+  mockExistingExtrasOverride?: MockExistingExtrasType
 ): Promise<ScenarioResponse> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -87,6 +101,7 @@ const doScenarioDetermination = async (
           email: null,
           phone: null,
           folkbokforing: { ...selectedAddress },
+          facilityId: null,
           marketingConsent: { email: false, sms: false }
         }
       };
@@ -100,6 +115,8 @@ const doScenarioDetermination = async (
           email: 'flytt@example.com',
           phone: '070-1111111',
           folkbokforing: ADDR_STHLM,
+          facilityId: null,
+          extraServices: getMockExistingExtras(mockExistingExtrasOverride),
           marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
         currentContractAddress: ADDR_STHLM
@@ -114,6 +131,8 @@ const doScenarioDetermination = async (
           email: 'stanna@example.com',
           phone: '070-2222222',
           folkbokforing: selectedAddress,
+          facilityId: '735999222222222222',
+          extraServices: getMockExistingExtras(mockExistingExtrasOverride),
           contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 months binding
           marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
@@ -129,6 +148,8 @@ const doScenarioDetermination = async (
           email: 'stanna.utan@example.com',
           phone: '070-3333333',
           folkbokforing: selectedAddress,
+          facilityId: '735999333333333333',
+          extraServices: getMockExistingExtras(mockExistingExtrasOverride),
           contractEndDate: null, // No binding
           marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
@@ -144,6 +165,7 @@ const doScenarioDetermination = async (
           email: null,
           phone: null,
           folkbokforing: null,
+          facilityId: null,
           marketingConsent: { email: false, sms: false }
         }
       };
@@ -159,7 +181,8 @@ export const determineScenario = async (
   pnr: string, 
   selectedAddress: Address,
   mockScenarioOverride?: MockScenarioType,
-  mockMarketingConsentOverride?: MockMarketingConsentType
+  mockMarketingConsentOverride?: MockMarketingConsentType,
+  mockExistingExtrasOverride?: MockExistingExtrasType
 ): Promise<ScenarioResponse> => {
   return loggedApiCall(
     '/api/scenario/determine',
@@ -169,7 +192,14 @@ export const determineScenario = async (
       address: selectedAddress, 
       mockOverride: mockScenarioOverride,
       mockMarketingConsent: mockMarketingConsentOverride,
+      mockExistingExtras: mockExistingExtrasOverride,
     },
-    () => doScenarioDetermination(pnr, selectedAddress, mockScenarioOverride, mockMarketingConsentOverride)
+    () => doScenarioDetermination(
+      pnr,
+      selectedAddress,
+      mockScenarioOverride,
+      mockMarketingConsentOverride,
+      mockExistingExtrasOverride
+    )
   );
 };

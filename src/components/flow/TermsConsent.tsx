@@ -3,38 +3,51 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { FacilityHandling, Product } from '@/types';
 import styles from './TermsConsent.module.css';
 
 interface TermsConsentProps {
   onConfirm: (data: { 
     termsAccepted: boolean; 
+    riskAccepted: boolean;
     marketing: { email: boolean; sms: boolean };
-    facilityId?: { fetch: boolean; value?: string };
+    facilityHandling?: FacilityHandling;
   }) => void;
   onBack: () => void;
   requiresFacilityId?: boolean; // If true, show facility ID section (e.g. for moves)
+  productType?: Product['type'];
+  initialRiskAccepted?: boolean;
   existingMarketingConsent?: { email: boolean; sms: boolean };
   initialMarketingConsent?: { email: boolean; sms: boolean };
+  initialFacilityHandling?: FacilityHandling | null;
 }
 
 export const TermsConsent = ({
   onConfirm,
   onBack,
   requiresFacilityId = false,
+  productType,
+  initialRiskAccepted = false,
   existingMarketingConsent = { email: false, sms: false },
   initialMarketingConsent = { email: false, sms: false },
+  initialFacilityHandling = null,
 }: TermsConsentProps) => {
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [riskAccepted, setRiskAccepted] = useState(initialRiskAccepted);
   const [marketingEmail, setMarketingEmail] = useState(initialMarketingConsent.email);
   const [marketingSms, setMarketingSms] = useState(initialMarketingConsent.sms);
   
   // Facility ID logic
-  const [fetchFacilityId, setFetchFacilityId] = useState(true);
-  const [manualFacilityId, setManualFacilityId] = useState('');
+  const [fetchFacilityId, setFetchFacilityId] = useState(initialFacilityHandling?.mode !== 'MANUAL');
+  const [manualFacilityId, setManualFacilityId] = useState(
+    initialFacilityHandling?.mode === 'MANUAL' ? (initialFacilityHandling.facilityId || '') : ''
+  );
   const [facilityIdError, setFacilityIdError] = useState('');
   const hasExistingEmailConsent = existingMarketingConsent.email;
   const hasExistingSmsConsent = existingMarketingConsent.sms;
   const showMarketingOptions = !hasExistingEmailConsent || !hasExistingSmsConsent;
+  const requiresRiskInfo = productType === 'FAST' || productType === 'KVARTS';
+  const canContinue = termsAccepted && (!requiresRiskInfo || riskAccepted);
 
   const handleContinue = () => {
     if (requiresFacilityId && !fetchFacilityId && !manualFacilityId) {
@@ -42,18 +55,20 @@ export const TermsConsent = ({
       return;
     }
 
-    if (termsAccepted) {
+    if (canContinue) {
       onConfirm({
         termsAccepted,
+        riskAccepted: requiresRiskInfo ? riskAccepted : false,
         marketing: {
           // Existing CRM consent is preserved and cannot be removed in the UI.
           email: hasExistingEmailConsent || marketingEmail,
           sms: hasExistingSmsConsent || marketingSms,
         },
-        facilityId: requiresFacilityId ? {
-          fetch: fetchFacilityId,
-          value: !fetchFacilityId ? manualFacilityId : undefined
-        } : undefined
+        facilityHandling: requiresFacilityId
+          ? fetchFacilityId
+            ? { mode: 'FETCH_WITH_POWER_OF_ATTORNEY', facilityId: null }
+            : { mode: 'MANUAL', facilityId: manualFacilityId }
+          : undefined
       });
     }
   };
@@ -123,6 +138,37 @@ export const TermsConsent = ({
         </label>
       </div>
 
+      {requiresRiskInfo && (
+        <>
+          <div className={styles.divider}></div>
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Viktig information om ditt avtal</h3>
+            <p className={styles.sectionDesc}>
+              Eftersom du valt ett {productType === 'FAST' ? 'fastprisavtal' : 'kvartsprisavtal'} behöver vi informera om följande.
+            </p>
+            <div className={styles.riskInfoBox}>
+              <p className={styles.riskInfoText}>
+                {productType === 'FAST'
+                  ? 'Eftersom du valt ett fastprisavtal är du skyddad mot prishöjningar, men om du bryter avtalet i förtid kan en brytavgift tillkomma.'
+                  : 'Priset på elmarknaden varierar och kan påverka din månadskostnad över tid.'}
+              </p>
+              <a href="#" className={styles.riskInfoLink}>Läs mer om risker</a>
+            </div>
+            <label className={`${styles.checkboxLabel} ${riskAccepted ? styles.checked : ''}`}>
+              <input
+                type="checkbox"
+                checked={riskAccepted}
+                onChange={(e) => setRiskAccepted(e.target.checked)}
+                className={styles.checkbox}
+              />
+              <span className={styles.labelText}>
+                Jag har tagit del av riskinformationen.
+              </span>
+            </label>
+          </div>
+        </>
+      )}
+
       {showMarketingOptions && (
         <>
           <div className={styles.divider}></div>
@@ -163,7 +209,7 @@ export const TermsConsent = ({
 
       <div className={styles.footer}>
         <Button 
-          disabled={!termsAccepted}
+          disabled={!canContinue}
           onClick={handleContinue}
           className={styles.continueButton}
         >

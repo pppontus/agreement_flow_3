@@ -13,7 +13,8 @@ import styles from './AppDownloadPrompt.module.css';
 
 interface AppDownloadPromptProps {
   selection?: ExtraServicesSelection | null;
-  onDone: () => void;
+  hasFinalExtrasStep?: boolean;
+  onContinue: () => void;
   onBack?: () => void;
 }
 
@@ -56,7 +57,12 @@ const joinItems = (items: string[]): string => {
   return `${items.slice(0, -1).join(', ')} och ${items[items.length - 1]}`;
 };
 
-export const AppDownloadPrompt = ({ selection, onDone, onBack }: AppDownloadPromptProps) => {
+export const AppDownloadPrompt = ({
+  selection,
+  hasFinalExtrasStep = true,
+  onContinue,
+  onBack,
+}: AppDownloadPromptProps) => {
   const deviceType = useSyncExternalStore(
     subscribeToDevice,
     detectDeviceType,
@@ -92,26 +98,27 @@ export const AppDownloadPrompt = ({ selection, onDone, onBack }: AppDownloadProm
         <h2 className={styles.title}>Nästa steg: ladda ner appen</h2>
         <p className={styles.subtitle}>
           I appen kan du följa din förbrukning, se avtal och få bättre koll på din energi.
+          {hasFinalExtrasStep ? ' Därefter får du ett sista frivilligt steg med kontaktönskemål.' : ''}
         </p>
       </header>
 
       <div className={styles.selectionSummary}>
         {hasAnySelection ? (
           <>
-            <h3 className={styles.summaryTitle}>Tack! Dina tillägg är registrerade</h3>
+            <h3 className={styles.summaryTitle}>Dina val hittills</h3>
             {selectedDirectServices.length > 0 && (
               <p className={styles.summaryText}>
-                Vi har lagt till {joinItems(selectedDirectServices)}.
-                {selection?.realtimeMeter.selected ? ' Din realtidsmätare skickas på posten.' : ''}
+                Du har valt {joinItems(selectedDirectServices)}.
+                {selection?.realtimeMeter.selected ? ' Realtidsmätaren skickas efter att beställningen slutförts.' : ''}
               </p>
             )}
             {selectedContactServices.length > 0 && (
               <p className={styles.summaryText}>
-                Vi kontaktar dig om {joinItems(selectedContactServices)}.
+                Du vill bli kontaktad om {joinItems(selectedContactServices)}.
               </p>
             )}
             <div className={styles.priceBox}>
-              <h4 className={styles.priceTitle}>Beställningsbekräftelse tilläggstjänster</h4>
+              <h4 className={styles.priceTitle}>Kostnadsöversikt tillägg</h4>
               {selection?.bixiaNara.selected && (
                 <div className={styles.priceRow}>
                   <span>Bixia nära{selection.bixiaNara.county ? ` (${selection.bixiaNara.county})` : ''}</span>
@@ -194,8 +201,8 @@ export const AppDownloadPrompt = ({ selection, onDone, onBack }: AppDownloadProm
       )}
 
       <div className={styles.footer}>
-        <Button fullWidth onClick={onDone}>
-          Gå till Mina Sidor
+        <Button fullWidth onClick={onContinue}>
+          {hasFinalExtrasStep ? 'Fortsätt till sista steget' : 'Gå till Mina Sidor'}
         </Button>
         {onBack && (
           <button className={styles.backLink} onClick={onBack}>

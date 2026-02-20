@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade } from '@/types';
-import { CompanyState } from '@/types/company';
+import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade, MoveChoice, FacilityHandling, Invoice, ScenarioCustomer } from '@/types';
+import { CompanyState, CompanyLookupData, Facility } from '@/types/company';
 
 const INITIAL_PRIVATE_STATE: PrivateCaseState = {
   customerType: 'PRIVATE',
@@ -11,6 +11,9 @@ const INITIAL_PRIVATE_STATE: PrivateCaseState = {
   scenario: 'UNKNOWN',
   elomrade: null,
   valdAdress: null,
+  moveChoice: null,
+  facilityHandling: null,
+  invoice: null,
   addressDetails: {
     boendeform: null,
     apartmentNumber: null,
@@ -58,7 +61,7 @@ const INITIAL_COMPANY_STATE: CompanyState = {
 
 const INITIAL_STATE: CaseState = INITIAL_PRIVATE_STATE;
 
-const STORAGE_KEY = 'bixia_flow_state_v2'; // Bump version since structure changed
+const STORAGE_KEY = 'bixia_flow_state_v4'; // Bump version since structure changed
 
 interface FlowStateContextType {
   state: CaseState;
@@ -68,13 +71,20 @@ interface FlowStateContextType {
   selectProduct: (product: Product) => void;
   setAddress: (address: Address, apartmentDetails?: { number: string | null; co: string | null }) => void;
   setAuthenticated: (pnr: string, method: IdMethod) => void;
-  setCustomerScenario: (scenario: Scenario, customer: any) => void;
+  setCustomerScenario: (scenario: Scenario, customer: ScenarioCustomer) => void;
+  setMoveChoice: (choice: MoveChoice) => void;
+  setFacilityHandling: (handling: FacilityHandling | null) => void;
+  setInvoice: (invoice: Invoice | null) => void;
   setCustomerDetails: (details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => void;
   setElomrade: (elomrade: Elomrade) => void;
   resolvePriceConflict: () => void;
   setConsents: (consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => void;
   resetState: () => void;
-  // Company Flow Setters will be added here in Phase 2
+  // Company Flow Setters
+  setCompanyProduct: (product: Product) => void;
+  setCompanyGatekeeper: (data: { totalConsumption: number; facilityCount: number }) => void;
+  setCompanyLookupData: (data: CompanyLookupData) => void;
+  setCompanyFacilities: (facilities: Facility[]) => void;
 }
 
 const FlowStateContext = createContext<FlowStateContextType | null>(null);
@@ -91,17 +101,18 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<CaseState>(INITIAL_STATE);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load from storage on mount
+  // Load persisted state only after mount to avoid hydration mismatch.
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setState(JSON.parse(stored));
+        setState(JSON.parse(stored) as CaseState);
       }
     } catch (e) {
       console.error('Failed to load flow state', e);
+    } finally {
+      setIsInitialized(true);
     }
-    setIsInitialized(true);
   }, []);
 
   // Save to storage on change
@@ -141,6 +152,7 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...prev,
         valdAdress: address,
+        invoice: null,
         elomrade: address.elomrade || prev.elomrade,
         isPriceConflict: isConflict,
         addressDetails: {
@@ -164,18 +176,52 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  const setCustomerScenario = useCallback((scenario: Scenario, customer: any) => {
+  const setCustomerScenario = useCallback((scenario: Scenario, customer: ScenarioCustomer) => {
     setState(prev => {
       if (prev.customerType !== 'PRIVATE') return prev;
       return {
         ...prev,
         scenario,
+        moveChoice: null,
+        facilityHandling: null,
+        invoice: null,
         marketingConsent: customer.marketingConsent || { email: false, sms: false },
         customer: {
           ...customer,
           folkbokforing: customer.folkbokforing || null, 
           marketingConsent: customer.marketingConsent || { email: false, sms: false },
         }
+      };
+    });
+  }, []);
+
+  const setMoveChoice = useCallback((choice: MoveChoice) => {
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        moveChoice: choice,
+        invoice: null,
+      };
+    });
+  }, []);
+
+  const setFacilityHandling = useCallback((handling: FacilityHandling | null) => {
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        facilityHandling: handling,
+      };
+    });
+  }, []);
+
+  const setInvoice = useCallback((invoice: Invoice | null) => {
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        invoice,
       };
     });
   }, []);
@@ -226,6 +272,51 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const setCompanyProduct = useCallback((product: Product) => {
+    setState(prev => {
+      if (prev.customerType !== 'COMPANY') return prev;
+      return {
+        ...prev,
+        selectedProduct: product,
+      };
+    });
+  }, []);
+
+  const setCompanyGatekeeper = useCallback((data: { totalConsumption: number; facilityCount: number }) => {
+    setState(prev => {
+      if (prev.customerType !== 'COMPANY') return prev;
+      return {
+        ...prev,
+        totalConsumption: data.totalConsumption,
+        facilityCount: data.facilityCount,
+      };
+    });
+  }, []);
+
+  const setCompanyLookupData = useCallback((data: CompanyLookupData) => {
+    setState(prev => {
+      if (prev.customerType !== 'COMPANY') return prev;
+      return {
+        ...prev,
+        orgNr: data.orgNr,
+        companyName: data.companyName,
+        isCreditApproved: data.isCreditApproved,
+        signatoryType: data.signatoryType,
+      };
+    });
+  }, []);
+
+  const setCompanyFacilities = useCallback((facilities: Facility[]) => {
+    setState(prev => {
+      if (prev.customerType !== 'COMPANY') return prev;
+      return {
+        ...prev,
+        facilities,
+        facilityCount: facilities.length || prev.facilityCount,
+      };
+    });
+  }, []);
+
   return (
     <FlowStateContext.Provider value={{ 
       state, 
@@ -235,11 +326,18 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       setAddress, 
       setAuthenticated, 
       setCustomerScenario,
+      setMoveChoice,
+      setFacilityHandling,
+      setInvoice,
       setCustomerDetails,
       setElomrade,
       resolvePriceConflict,
       setConsents,
-      resetState 
+      resetState,
+      setCompanyProduct,
+      setCompanyGatekeeper,
+      setCompanyLookupData,
+      setCompanyFacilities,
     }}>
       {children}
     </FlowStateContext.Provider>

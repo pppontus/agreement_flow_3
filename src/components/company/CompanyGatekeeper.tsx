@@ -1,55 +1,48 @@
 "use client";
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import styles from './CompanyGatekeeper.module.css';
 
 interface CompanyGatekeeperProps {
   onContinue: (consumption: number, facilities: number) => void;
 }
 
+type CompanySize = 'SMALL' | 'MEDIUM' | 'LARGE';
+
 export const CompanyGatekeeper = ({ onContinue }: CompanyGatekeeperProps) => {
-  const [consumption, setConsumption] = useState<string>('');
-  const [facilities, setFacilities] = useState<string>('');
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedSize, setBlockedSize] = useState<CompanySize | null>(null);
 
-  const MAX_CONSUMPTION = 150000;
-  const MAX_FACILITIES = 5;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cons = parseInt(consumption.replace(/\s/g, ''), 10);
-    // Facilities input removed, defaulting to 1 for logic compatibility
-    const fac = 1; 
-
-    if (isNaN(cons)) return;
-
-    if (cons > MAX_CONSUMPTION) {
-      setIsBlocked(true);
-    } else {
-      onContinue(cons, fac);
+  const handleChooseSize = (size: CompanySize) => {
+    if (size === 'SMALL') {
+      // MVP: we only capture size segment here, not exact kWh.
+      onContinue(0, 1);
+      return;
     }
+    setBlockedSize(size);
   };
 
-  if (isBlocked) {
+  if (blockedSize) {
     return (
       <div className={styles.container}>
         <div className={styles.icon}>📞</div>
         <h2 className={styles.title}>Vi hjälper dig gärna personligen!</h2>
         <p className={styles.description}>
-          Då ditt företag har en årsförbrukning över 150 000 kWh eller fler än 5 anläggningar 
-          vill vi ge er ett skräddarsytt erbjudande.
+          {blockedSize === 'MEDIUM'
+            ? 'För mellanstora företag vill vi ge ett mer träffsäkert erbjudande med rätt upplägg från start.'
+            : 'För stora företag vill vi ge ett skräddarsytt erbjudande med personlig rådgivning.'}
         </p>
         <div className={styles.contactBox}>
           <p>Kontakta våra företagssäljare:</p>
           <a href="tel:0771-603030" className={styles.phoneLink}>0771-60 30 30</a>
           <p className={styles.subtext}>Öppet vardagar 08.00–16.00</p>
         </div>
-        <Button onClick={() => window.location.href = 'https://www.bixia.se/foretag/kontakta-oss'} variant="outline">
+        <Button onClick={() => window.location.href = 'https://www.bixia.se/foretag/kontakta-oss'}>
           Gå till kontaktsidan
         </Button>
+        <button className={styles.backLink} onClick={() => setBlockedSize(null)}>
+          ← Välj företagsstorlek igen
+        </button>
       </div>
     );
   }
@@ -58,25 +51,34 @@ export const CompanyGatekeeper = ({ onContinue }: CompanyGatekeeperProps) => {
     <div className={styles.container}>
       <h2 className={styles.title}>Välkommen Företag!</h2>
       <p className={styles.description}>
-        För att ge dig rätt erbjudande behöver vi veta lite om din verksamhet.
+        Välj den storlek som passar bäst. Om du är osäker, börja med det alternativ som känns närmast.
       </p>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <Input
-          label="Total årsförbrukning (kWh)"
-          value={consumption}
-          onChange={(e) => setConsumption(e.target.value)}
-          placeholder="t.ex. 50 000"
-          type="number"
-          required
-        />
-        
-        {/* Facility count removed for Linear First flow */}
+      <div className={styles.options}>
+        <button className={styles.optionCard} onClick={() => handleChooseSize('SMALL')}>
+          <div className={styles.optionIcon}>🏪</div>
+          <div className={styles.optionContent}>
+            <h3 className={styles.optionTitle}>Litet företag</h3>
+            <p className={styles.optionText}>Upp till 150 000 kWh/år. Fortsätt direkt i webbflödet.</p>
+          </div>
+        </button>
 
-        <Button type="submit" disabled={!consumption} className={styles.submitBtn}>
-          Gå vidare
-        </Button>
-      </form>
+        <button className={styles.optionCard} onClick={() => handleChooseSize('MEDIUM')}>
+          <div className={styles.optionIcon}>🏢</div>
+          <div className={styles.optionContent}>
+            <h3 className={styles.optionTitle}>Mellanföretag</h3>
+            <p className={styles.optionText}>Över 150 000 kWh/år. Vi slussar dig till företagssäljare.</p>
+          </div>
+        </button>
+
+        <button className={styles.optionCard} onClick={() => handleChooseSize('LARGE')}>
+          <div className={styles.optionIcon}>🏭</div>
+          <div className={styles.optionContent}>
+            <h3 className={styles.optionTitle}>Stort företag</h3>
+            <p className={styles.optionText}>Större energibehov. Vi slussar dig till företagssäljare.</p>
+          </div>
+        </button>
+      </div>
     </div>
   );
 };

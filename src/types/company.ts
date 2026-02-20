@@ -1,4 +1,4 @@
-import { Address, Elomrade } from './index';
+import { Elomrade, Product } from './index';
 
 export type CompanyScenario = 'NYTECKNING' | 'LEVERANTÖRSBYTE' | 'OMTECKNING';
 export type SignatoryType = 'SINGLE' | 'DUAL' | 'UNKNOWN';
@@ -11,6 +11,13 @@ export type Facility = {
   city: string;
   annualConsumption: number; // kWh
   elomrade?: Elomrade;
+};
+
+export type CompanyLookupData = {
+  orgNr: string;
+  companyName: string;
+  isCreditApproved: boolean;
+  signatoryType: SignatoryType;
 };
 
 export type CompanyState = {
@@ -43,7 +50,7 @@ export type CompanyState = {
   facilities: Facility[];
   
   // Product
-  selectedProduct: 'RÖRLIGT' | 'KVARTS' | 'FÖRVALTAT' | null;
+  selectedProduct: Product | null;
   startDate: string | null; // Format: YYYY-MM-01 (Alltid den 1:a)
   
   // Invoice

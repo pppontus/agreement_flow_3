@@ -14,10 +14,12 @@ export type FlowPhase =
   | 'MOVE_OFFER'
   | 'DETAILS'
   | 'TERMS'
-  | 'RISK_INFO'
   | 'SIGNING'
   | 'CONFIRMATION'
-  | 'APP_DOWNLOAD';
+  | 'EXTRA_BIXIA_NARA'
+  | 'EXTRA_REALTIME_METER'
+  | 'APP_DOWNLOAD'
+  | 'EXTRA_CONTACT';
 
 export type MockScenarioType = 
   | 'NY_KUND'           // New customer
@@ -29,6 +31,24 @@ export type MockScenarioType =
 export type MockMarketingConsentType =
   | 'HAS_CONSENT'
   | 'NO_CONSENT';
+
+export type MockExistingExtrasType = {
+  BIXIA_NARA: boolean;
+  REALTIME_METER: boolean;
+  HOME_BATTERY: boolean;
+  CHARGER: boolean;
+  SOLAR: boolean;
+  ATTIC_INSULATION: boolean;
+};
+
+export const DEFAULT_MOCK_EXISTING_EXTRAS: MockExistingExtrasType = {
+  BIXIA_NARA: false,
+  REALTIME_METER: false,
+  HOME_BATTERY: false,
+  CHARGER: false,
+  SOLAR: false,
+  ATTIC_INSULATION: false,
+};
 
 export type MockAddressResult = 
   | 'FOUND'             // Normal results
@@ -48,6 +68,7 @@ interface DevPanelState {
   // Mock selections per phase
   mockScenario: MockScenarioType;
   mockMarketingConsent: MockMarketingConsentType;
+  mockExistingExtras: MockExistingExtrasType;
   mockAddressResult: MockAddressResult;
   mockSigningResult: MockSigningResult;
 }
@@ -59,6 +80,7 @@ interface DevPanelContextType {
   setCurrentPhase: (phase: FlowPhase) => void;
   setMockScenario: (scenario: MockScenarioType) => void;
   setMockMarketingConsent: (consent: MockMarketingConsentType) => void;
+  setMockExistingExtra: (service: keyof MockExistingExtrasType, selected: boolean) => void;
   setMockAddressResult: (result: MockAddressResult) => void;
   setMockSigningResult: (result: MockSigningResult) => void;
 }
@@ -76,6 +98,7 @@ export const useDevPanel = () => {
         currentPhase: 'PRODUCT_SELECT' as FlowPhase,
         mockScenario: 'RANDOM' as MockScenarioType, 
         mockMarketingConsent: 'HAS_CONSENT' as MockMarketingConsentType,
+        mockExistingExtras: DEFAULT_MOCK_EXISTING_EXTRAS,
         mockAddressResult: 'FOUND' as MockAddressResult,
         mockSigningResult: 'SUCCESS' as MockSigningResult,
       },
@@ -84,6 +107,7 @@ export const useDevPanel = () => {
       setCurrentPhase: () => {},
       setMockScenario: () => {},
       setMockMarketingConsent: () => {},
+      setMockExistingExtra: () => {},
       setMockAddressResult: () => {},
       setMockSigningResult: () => {},
     };
@@ -98,6 +122,7 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
     currentPhase: 'PRODUCT_SELECT',
     mockScenario: 'RANDOM',
     mockMarketingConsent: 'HAS_CONSENT',
+    mockExistingExtras: DEFAULT_MOCK_EXISTING_EXTRAS,
     mockAddressResult: 'FOUND',
     mockSigningResult: 'SUCCESS',
   });
@@ -133,6 +158,16 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
     setState(prev => ({ ...prev, mockMarketingConsent: consent }));
   }, []);
 
+  const setMockExistingExtra = useCallback((service: keyof MockExistingExtrasType, selected: boolean) => {
+    setState(prev => ({
+      ...prev,
+      mockExistingExtras: {
+        ...prev.mockExistingExtras,
+        [service]: selected,
+      },
+    }));
+  }, []);
+
   const setMockAddressResult = useCallback((result: MockAddressResult) => {
     setState(prev => ({ ...prev, mockAddressResult: result }));
   }, []);
@@ -149,6 +184,7 @@ export const DevPanelProvider = ({ children }: { children: ReactNode }) => {
       setCurrentPhase,
       setMockScenario, 
       setMockMarketingConsent,
+      setMockExistingExtra,
       setMockAddressResult,
       setMockSigningResult,
     }}>

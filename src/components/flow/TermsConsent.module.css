@@ -33,6 +33,27 @@
   margin: 0 0 var(--space-md) 0;
 }
 
+.riskInfoBox {
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.riskInfoText {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+.riskInfoLink {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
 .facilitySection {
   margin-bottom: var(--space-lg);
   animation: fadeIn var(--transition-normal);

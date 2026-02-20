@@ -1,10 +1,14 @@
 import { apiClient } from './apiClient';
+import { ContactInterestServiceId } from '@/types';
 
-export type ContactMeServiceId =
-  | 'HOME_BATTERY'
-  | 'CHARGER'
-  | 'SOLAR'
-  | 'ATTIC_INSULATION';
+export type ContactMeServiceId = ContactInterestServiceId;
+
+export const CONTACT_ME_SERVICE_IDS: ContactMeServiceId[] = [
+  'HOME_BATTERY',
+  'CHARGER',
+  'SOLAR',
+  'ATTIC_INSULATION',
+];
 
 export const BIXIA_NARA_MONTHLY_SEK = 29;
 export const REALTIME_METER_ONE_TIME_SEK = 695;

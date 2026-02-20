@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useFlowState } from '@/hooks/useFlowState';
-import { formatAddress } from '@/services/addressService';
+import { formatAddress, formatInvoiceAddress } from '@/services/addressService';
 import styles from './SigningFlow.module.css';
 
 interface SigningFlowProps {
@@ -31,6 +31,30 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
 
   if (rawState.customerType !== 'PRIVATE') return null;
   const state = rawState;
+  const moveChoiceLabel =
+    state.moveChoice === 'MOVE_EXISTING'
+      ? 'Flytta med befintligt avtal'
+      : state.moveChoice === 'NEW_ON_NEW_ADDRESS'
+        ? 'Teckna nytt avtal på ny adress'
+        : null;
+  const facilityHandlingValue =
+    state.facilityHandling?.mode === 'FROM_CRM'
+      ? `${state.facilityHandling.facilityId || '-'} (hämtat från CRM)`
+      : state.facilityHandling?.mode === 'FETCH_WITH_POWER_OF_ATTORNEY'
+      ? 'Hämtas via fullmakt (skickas efter signering)'
+      : state.facilityHandling?.mode === 'MANUAL'
+        ? (state.facilityHandling.facilityId || '-')
+        : null;
+  const invoiceAddressValue =
+    state.invoice?.address
+      ? formatInvoiceAddress(state.invoice)
+      : '-';
+  const signingDescription =
+    state.moveChoice === 'MOVE_EXISTING'
+      ? 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ditt befintliga avtal flyttas till adressen ovan.'
+      : state.moveChoice === 'NEW_ON_NEW_ADDRESS'
+        ? 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du ett extra avtal för adressen ovan, medan ditt nuvarande avtal ligger kvar på tidigare adress.'
+        : 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ett nytt elavtal tecknas för ovanstående adress.';
 
   return (
     <div className={styles.container}>
@@ -66,6 +90,22 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                    <span className={styles.summaryLabel}>Startdatum:</span>
                    <span className={styles.summaryValue}>{state.startDate || '-'}</span>
                  </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Fakturaadress:</span>
+                   <span className={styles.summaryValue}>{invoiceAddressValue}</span>
+                 </div>
+                 {facilityHandlingValue && (
+                   <div className={styles.summaryItem}>
+                     <span className={styles.summaryLabel}>Anläggnings-ID:</span>
+                     <span className={styles.summaryValue}>{facilityHandlingValue}</span>
+                   </div>
+                 )}
+                 {state.scenario === 'FLYTT' && moveChoiceLabel && (
+                   <div className={styles.summaryItem}>
+                     <span className={styles.summaryLabel}>Valt flyttspår:</span>
+                     <span className={styles.summaryValue}>{moveChoiceLabel}</span>
+                   </div>
+                 )}
                  {state.selectedProduct?.pricePerKwh !== undefined && (
                    <div className={styles.summaryItem}>
                      <span className={styles.summaryLabel}>Pris:</span>
@@ -76,7 +116,7 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
              </div>
              
              <p className={styles.initText}>
-               Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ett nytt elavtal tecknas för ovanstående adress.
+               {signingDescription}
              </p>
           </div>
         )}
