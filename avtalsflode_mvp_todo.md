@@ -149,7 +149,7 @@ Status 2026-02-20:
 
 ---
 
-### [ ] P0.4 Säkerställ att "generiskt avtal" inte leder till otydlig signering
+### [X] P0.4 Säkerställ att "generiskt avtal" inte leder till otydlig signering
 
 Problem:
 
@@ -174,6 +174,19 @@ Implementation (MVP-nivå):
 Acceptance criteria:
 
 - Ingen användare kan nå signering med odefinierad avtalsform.
+
+Status 2026-02-20:
+
+- Lagt till guard i `PrivateFlow` som skickar användaren till nytt steg `PRODUCT_CLARIFY` om valt avtal är generiskt (`id=GENERIC`) och användaren försöker nå `TERMS`, `SIGNING` eller efterföljande steg.
+- `ADDRESS_SEARCH` routar till `PRODUCT_CLARIFY` direkt när generiskt val används, så avtalsformen klargörs tidigt.
+- Nytt konkretiseringssteg återanvänder `ProductSelection` i adress-känt läge (`hideRegionSelector`) och visar kort copy om varför explicit avtalsform krävs.
+- Back-navigation från `PRODUCT_CLARIFY` går tillbaka till `ADDRESS_SEARCH` före identifiering, och till `DETAILS` som fallback om steget nås sent.
+- Guarden gör att direktlänkar/edge cases inte kan kringgå kravet på konkret avtalsform.
+
+Statusnotis extratjänster 2026-02-20:
+
+- Nya kunder får nu också erbjudande om extratjänster och kontaktintresse.
+- Befintliga kunder ser bara tjänster de saknar (filtrerat mot CRM), förutom vid ny adress/tilläggsavtal där extratjänster erbjuds igen per adress.
 
 ## P1 - Bör göras
 
@@ -312,7 +325,7 @@ Etapp A (Måste):
 - [X] P0.1
 - [X] P0.2
 - [X] P0.3
-- [ ] P0.4
+- [X] P0.4
 
 Etapp B (Stabil demo):
 
@@ -417,12 +430,12 @@ När arbetet lämnas över ska följande finnas:
 
 ## 9) Nästa rekommenderade steg (nu)
 
-Nästa steg: **P0.4 Säkerställ explicit avtalsform före signering**.
+Nästa steg: **P1.1 Förbättra mockad scenariologik så den känns som CRM utan integration**.
 
 Viktigt att få med:
 
-- Lägg en guard innan `TERMS`/`SIGNING` så generiskt val inte kan signeras.
-- Definiera tydlig väg för användare som startat generiskt (routing till konkret avtalsval).
-- Säkerställ att back-navigation fungerar utan att skapa loopar mellan steg.
-- Visa i UI varför användaren behöver välja konkret avtalsform (kort copy).
-- Testa att `PriceConflictResolver` inte kringgår guarden.
+- Lägg till explicita mockscenarier i DevPanel, inklusive två stoppfall.
+- Säkerställ att varje scenario ger konsekvent data i `scenarioService` (kundtyp, bindningstid, stopporsak m.m.).
+- Behåll "RANDOM" men gör den deterministisk per session för förutsägbar demo.
+- Visa tydligt i UI när ett stoppfall inträffar och vad nästa steg är för kunden.
+- Verifiera snabb testbarhet: testledare ska kunna välja scenario utan special-PNR.

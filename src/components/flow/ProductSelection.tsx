@@ -14,13 +14,15 @@ interface ProductSelectionProps {
   isCompany?: boolean;
   initialRegion?: string;
   hideRegionSelector?: boolean;
+  notice?: string;
 }
 
 export const ProductSelection = ({ 
   onProductSelect, 
   isCompany = false,
   initialRegion,
-  hideRegionSelector = false
+  hideRegionSelector = false,
+  notice
 }: ProductSelectionProps) => {
   const { state: rawState, setElomrade } = useFlowState();
   
@@ -36,9 +38,12 @@ export const ProductSelection = ({
   // Sync local region when state.elomrade changes (only for private flow)
   useEffect(() => {
     if (privateState?.elomrade && privateState.elomrade !== region) {
-      setLocalRegion(privateState.elomrade);
+      const timer = window.setTimeout(() => {
+        setLocalRegion(privateState.elomrade!);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
-  }, [privateState?.elomrade]);
+  }, [privateState?.elomrade, region]);
   
   // Pass isCompany to getProductsForRegion
   const allProducts = getProductsForRegion(region, isCompany, true);
@@ -85,7 +90,7 @@ export const ProductSelection = ({
       {!hasSelectedAddress && (
         <section className={styles.conceptSection}>
           <p className={styles.conceptText}>
-            Denna sida representerar en valfri undersida på bixia.se. I det här konceptet har vi brutit ut "produktkorten" 
+            Denna sida representerar en valfri undersida på bixia.se. I det här konceptet har vi brutit ut &quot;produktkorten&quot; 
             så att de kan placeras var som helst på hemsidan för att inleda avtalsflödet därifrån.
           </p>
         </section>
@@ -109,6 +114,10 @@ export const ProductSelection = ({
           </div>
         )}
       </header>
+
+      {notice && (
+        <p className={styles.notice}>{notice}</p>
+      )}
 
       <div className={styles.optionsRow}>
         {!isCompany && (

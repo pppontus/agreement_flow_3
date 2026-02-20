@@ -9,6 +9,7 @@ export type { ApiLogEntry } from '@/services/apiClient';
 // Types for mock scenario selection - now with flow phase context
 export type FlowPhase = 
   | 'PRODUCT_SELECT'
+  | 'PRODUCT_CLARIFY'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
   | 'MOVE_OFFER'

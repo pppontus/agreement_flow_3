@@ -38,6 +38,7 @@ const EXISTING_EXTRAS_OPTIONS = [
 
 const PHASE_LABELS: Record<FlowPhase, string> = {
   'PRODUCT_SELECT': 'Produktval',
+  'PRODUCT_CLARIFY': 'Välj avtalsform',
   'ADDRESS_SEARCH': 'Adresssökning',
   'IDENTIFY': 'Identifiering',
   'MOVE_OFFER': 'Flyttmatchning',

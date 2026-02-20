@@ -25,6 +25,7 @@ import { CONTACT_ME_SERVICE_IDS, ExtraServicesSelection, saveExtraServicesSelect
 
 type FlowStep = 
   | 'PRODUCT_SELECT'
+  | 'PRODUCT_CLARIFY'
   | 'ADDRESS_SEARCH'
   | 'IDENTIFY'
   | 'MOVE_OFFER'
@@ -39,6 +40,7 @@ type FlowStep =
 
 const FLOW_STEPS: FlowStep[] = [
   'PRODUCT_SELECT',
+  'PRODUCT_CLARIFY',
   'ADDRESS_SEARCH',
   'IDENTIFY',
   'MOVE_OFFER',
@@ -78,6 +80,7 @@ export const PrivateFlow = () => {
   const isPrivateFlow = rawState.customerType === 'PRIVATE';
   const state = rawState as PrivateCaseState;
   const selectedProduct = isPrivateFlow ? rawState.selectedProduct : null;
+  const isGenericProductSelected = selectedProduct?.id === 'GENERIC';
   const scenario = isPrivateFlow ? rawState.scenario : 'UNKNOWN';
   const selectedAddress = isPrivateFlow ? rawState.valdAdress : null;
   const folkbokforingAddress = isPrivateFlow ? rawState.customer.folkbokforing : null;
@@ -97,13 +100,13 @@ export const PrivateFlow = () => {
   const alreadyHasContactServices = new Set(
     isAdditionalAddressFlow ? [] : (existingExtraServices?.contactMeServices ?? [])
   );
-  const shouldOfferBixiaNara = state.customer.isExistingCustomer && !alreadyHasBixiaNara;
-  const shouldOfferRealtimeMeter = state.customer.isExistingCustomer && !alreadyHasRealtimeMeter;
+  const shouldOfferBixiaNara = !alreadyHasBixiaNara;
+  const shouldOfferRealtimeMeter = !alreadyHasRealtimeMeter;
   const shouldOfferAnyDirectExtras = shouldOfferBixiaNara || shouldOfferRealtimeMeter;
   const contactServicesToOffer = CONTACT_ME_SERVICE_IDS.filter(
     (serviceId) => !alreadyHasContactServices.has(serviceId)
   );
-  const shouldOfferAnyContactExtras = state.customer.isExistingCustomer && contactServicesToOffer.length > 0;
+  const shouldOfferAnyContactExtras = contactServicesToOffer.length > 0;
   const shouldShowContactExtrasStep = shouldOfferAnyDirectExtras || shouldOfferAnyContactExtras;
   const hasFacilityFromCrm =
     isPrivateFlow &&
@@ -178,6 +181,25 @@ export const PrivateFlow = () => {
     goToStep,
   ]);
 
+  // Guard: generic agreement must be clarified before legal/signing/post-signing steps.
+  useEffect(() => {
+    if (!isPrivateFlow || !isInitialized) return;
+    if (!isGenericProductSelected) return;
+
+    const requiresConcreteProduct =
+      currentStep === 'TERMS' ||
+      currentStep === 'SIGNING' ||
+      currentStep === 'CONFIRMATION' ||
+      currentStep === 'EXTRA_BIXIA_NARA' ||
+      currentStep === 'EXTRA_REALTIME_METER' ||
+      currentStep === 'APP_DOWNLOAD' ||
+      currentStep === 'EXTRA_CONTACT';
+
+    if (requiresConcreteProduct) {
+      goToStep('PRODUCT_CLARIFY');
+    }
+  }, [currentStep, goToStep, isGenericProductSelected, isInitialized, isPrivateFlow]);
+
   // Guard extra-service steps so users only see eligible offers.
   useEffect(() => {
     if (!isPrivateFlow || !isInitialized) return;
@@ -232,6 +254,10 @@ export const PrivateFlow = () => {
 
   const handleAddressConfirm = (address: Address, apartmentDetails?: { number: string, co?: string }) => {
     setAddress(address, apartmentDetails ? { number: apartmentDetails.number, co: apartmentDetails.co || null } : undefined);
+    if (isGenericProductSelected) {
+      goToStep('PRODUCT_CLARIFY');
+      return;
+    }
     goToStep('IDENTIFY');
   };
 
@@ -330,6 +356,11 @@ export const PrivateFlow = () => {
     marketing: { email: boolean; sms: boolean };
     facilityHandling?: FacilityHandling;
   }) => {
+    if (isGenericProductSelected) {
+      goToStep('PRODUCT_CLARIFY');
+      return;
+    }
+
     setConsents({ 
       terms: consents.termsAccepted, 
       risk: consents.riskAccepted,
@@ -343,6 +374,10 @@ export const PrivateFlow = () => {
   };
 
   const handleSigned = () => {
+    if (isGenericProductSelected) {
+      goToStep('PRODUCT_CLARIFY');
+      return;
+    }
     goToStep('CONFIRMATION');
   };
 
@@ -425,6 +460,14 @@ export const PrivateFlow = () => {
 
   const handleBack = () => {
     switch (currentStep) {
+      case 'PRODUCT_CLARIFY':
+        if (state.isAuthenticated) {
+          setDetailsSubStep('CONTACT');
+          goToStep('DETAILS');
+        } else {
+          goToStep('ADDRESS_SEARCH');
+        }
+        break;
       case 'ADDRESS_SEARCH':
         goToStep('PRODUCT_SELECT');
         break;
@@ -488,6 +531,28 @@ export const PrivateFlow = () => {
     <>
       {currentStep === 'PRODUCT_SELECT' && (
         <ProductSelection onProductSelect={handleProductSelect} />
+      )}
+
+      {currentStep === 'PRODUCT_CLARIFY' && (
+        <ProductSelection
+          onProductSelect={(product) => {
+            selectProduct(product);
+            if (!state.isAuthenticated) {
+              goToStep('IDENTIFY');
+              return;
+            }
+            if (!state.startDate) {
+              setDetailsSubStep('DATE');
+              setTempDateData(null);
+              goToStep('DETAILS');
+              return;
+            }
+            goToStep('TERMS');
+          }}
+          initialRegion={state.elomrade || undefined}
+          hideRegionSelector
+          notice="Innan du kan gå vidare behöver du välja en konkret avtalsform för den här adressen."
+        />
       )}
 
       {currentStep === 'ADDRESS_SEARCH' && (
@@ -577,7 +642,7 @@ export const PrivateFlow = () => {
           email={state.customer.email || undefined}
           invoice={state.invoice || undefined}
           facilityHandling={state.facilityHandling || undefined}
-          canSelectExtraServices={shouldOfferAnyDirectExtras}
+          canSelectExtraServices={shouldOfferAnyDirectExtras || shouldOfferAnyContactExtras}
           onContinue={handleConfirmationContinue}
         />
       )}
