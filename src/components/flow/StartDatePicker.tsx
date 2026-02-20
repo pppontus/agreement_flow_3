@@ -62,27 +62,27 @@ export const StartDatePicker = ({
       <header className={styles.header}>
         {isSwitching ? (
           <>
-            <h2 className={styles.title}>När ska vi byta ditt elavtal?</h2>
+            <h2 className={styles.title}>När ska bytet starta?</h2>
             <p className={styles.subtitle}>
-              Vi hjälper dig att byta till <strong>{productName || 'oss'}</strong> på <strong>{address?.street} {address?.number}</strong>.
+              Välj startdatum för bytet till <strong>{productName || 'oss'}</strong> på <strong>{address?.street} {address?.number}</strong>.
             </p>
           </>
         ) : (
           <>
             <h2 className={styles.title}>
               {isMoveExisting
-                ? 'När ska vi flytta ditt avtal?'
+                ? 'När ska flytten börja gälla?'
                 : isNewOnNewAddress
-                  ? 'När ska det nya avtalet starta?'
-                  : 'När ska avtalet starta?'}
+                  ? 'När ska det nya avtalet börja gälla?'
+                  : 'När ska avtalet börja gälla?'}
             </h2>
             <p className={styles.subtitle}>
               {isMoveExisting ? (
                 <>Vi flyttar ditt nuvarande avtal till <strong>{address?.street} {address?.number}</strong>.</>
               ) : isNewOnNewAddress ? (
-                <>Du tecknar ett extra avtal för <strong>{address?.street} {address?.number}</strong> och behåller avtalet på din tidigare adress.</>
+                <>Du tecknar ett extra avtal för <strong>{address?.street} {address?.number}</strong>. Ditt nuvarande avtal ligger kvar.</>
               ) : (
-                <>Vi ser till att elen flyter på till <strong>{address?.street} {address?.number}</strong>.</>
+                <>Välj när avtalet ska börja gälla på <strong>{address?.street} {address?.number}</strong>.</>
               )}
             </p>
           </>
@@ -93,7 +93,7 @@ export const StartDatePicker = ({
         <div className={styles.infoBox}>
           <span className={styles.infoIcon}>💡</span>
           <p className={styles.infoText}>
-            Vi behöver veta när ditt nuvarande avtal löper ut för att undvika brytavgifter.
+            För att undvika brytavgift behöver vi veta när ditt nuvarande avtal kan avslutas.
           </p>
         </div>
       )}
@@ -138,8 +138,8 @@ export const StartDatePicker = ({
               <span className={styles.choiceDesc}>
                 {isSwitching 
                   ? hasConfirmedNoBinding
-                    ? `Vi startar bytet omgående (ca ${earliest}).`
-                    : `Vi startar bytet omgående (ca ${earliest}). Kontrollera att du inte har bindningstid kvar.`
+                    ? `Vi påbörjar bytet så snart det är möjligt (ca ${earliest}).`
+                    : `Vi påbörjar bytet så snart det är möjligt (ca ${earliest}). Kontrollera bindningstiden hos ditt nuvarande elbolag.`
                   : `Vi startar avtalet så snart det går (ca ${earliest}).`
                 }
               </span>
@@ -157,9 +157,9 @@ export const StartDatePicker = ({
               />
             </div>
             <div className={styles.textWrapper}>
-              <span className={styles.choiceTitle}>Välj eget startdatum</span>
+              <span className={styles.choiceTitle}>Välj startdatum själv</span>
               <span className={styles.choiceDesc}>
-                Välj detta om du har ett exakt datum när du vill att ditt avtal ska börja.
+                Ange ett exakt datum.
               </span>
               
               {mode === 'SPECIFIC' && (
@@ -184,7 +184,7 @@ export const StartDatePicker = ({
           onClick={handleContinue}
           className={styles.continueButton}
         >
-          {isSwitching ? 'Bekräfta byte' : 'Fortsätt'}
+          {isSwitching ? 'Bekräfta startdatum' : 'Fortsätt'}
         </Button>
         <button className={styles.backLink} onClick={onBack}>
           ← Tillbaka

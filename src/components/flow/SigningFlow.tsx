@@ -31,30 +31,58 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
 
   if (rawState.customerType !== 'PRIVATE') return null;
   const state = rawState;
+  const isSameAddress = (
+    a: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined,
+    b: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined
+  ) => {
+    if (!a || !b) return false;
+    return (
+      a.street === b.street &&
+      a.number === b.number &&
+      a.postalCode === b.postalCode &&
+      a.city === b.city &&
+      (a.apartmentNumber || '') === (b.apartmentNumber || '')
+    );
+  };
   const moveChoiceLabel =
     state.moveChoice === 'MOVE_EXISTING'
       ? 'Flytta med befintligt avtal'
       : state.moveChoice === 'NEW_ON_NEW_ADDRESS'
         ? 'Teckna nytt avtal på ny adress'
         : null;
+  const agreementPathLabel =
+    state.scenario === 'FLYTT'
+      ? moveChoiceLabel || 'Flytt'
+      : state.scenario === 'BYTE'
+        ? 'Byte på befintlig adress'
+        : state.scenario === 'NY'
+          ? 'Nyteckning'
+          : state.scenario === 'EXTRA'
+            ? 'Befintlig adress med samma avtal'
+            : '-';
   const facilityHandlingValue =
     state.facilityHandling?.mode === 'FROM_CRM'
-      ? `${state.facilityHandling.facilityId || '-'} (hämtat från CRM)`
+      ? (state.facilityHandling.facilityId || '-')
       : state.facilityHandling?.mode === 'FETCH_WITH_POWER_OF_ATTORNEY'
-      ? 'Hämtas via fullmakt (skickas efter signering)'
+      ? 'Hämtas via fullmakt'
       : state.facilityHandling?.mode === 'MANUAL'
         ? (state.facilityHandling.facilityId || '-')
         : null;
+  const facilityHandlingLabel =
+    'Anläggnings-ID';
   const invoiceAddressValue =
     state.invoice?.address
       ? formatInvoiceAddress(state.invoice)
       : '-';
+  const showInvoiceAddress =
+    !!state.invoice?.address &&
+    !isSameAddress(state.invoice.address, state.valdAdress || undefined);
   const signingDescription =
     state.moveChoice === 'MOVE_EXISTING'
-      ? 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ditt befintliga avtal flyttas till adressen ovan.'
+      ? 'När du signerar flyttas ditt avtal till adressen ovan.'
       : state.moveChoice === 'NEW_ON_NEW_ADDRESS'
-        ? 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du ett extra avtal för adressen ovan, medan ditt nuvarande avtal ligger kvar på tidigare adress.'
-        : 'Klicka på knappen nedan för att starta signering med BankID. Genom att signera godkänner du att ett nytt elavtal tecknas för ovanstående adress.';
+        ? 'När du signerar tecknar du ett nytt avtal för adressen ovan.'
+        : 'När du signerar bekräftar du avtalet för adressen ovan.';
 
   return (
     <div className={styles.container}>
@@ -62,8 +90,8 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
         <h2 className={styles.title}>Signera avtalet</h2>
         <p className={styles.subtitle}>
           {status === 'INIT' 
-            ? "Du är ett klick från att bli Bixia-kund!" 
-            : "Öppna BankID-appen i din mobil och signera."}
+            ? "Sista steget. Signera med BankID." 
+            : "Öppna BankID och signera."}
         </p>
       </header>
 
@@ -71,7 +99,7 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
         {status === 'INIT' && (
           <div className={styles.initView}>
              <div className={styles.summaryContainer}>
-               <h3 className={styles.summaryTitle}>Sammanfattning</h3>
+               <h3 className={styles.summaryTitle}>Det här signerar du</h3>
                <div className={styles.summaryGrid}>
                  <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Avtal:</span>
@@ -79,6 +107,10 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                      {state.selectedProduct?.name}
                      {state.selectedProduct?.isDiscounted && <span className={styles.summaryDiscountBadge}>Rabatterat</span>}
                    </span>
+                 </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Ärende:</span>
+                   <span className={styles.summaryValue}>{agreementPathLabel}</span>
                  </div>
                  <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Adress:</span>
@@ -90,27 +122,23 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                    <span className={styles.summaryLabel}>Startdatum:</span>
                    <span className={styles.summaryValue}>{state.startDate || '-'}</span>
                  </div>
-                 <div className={styles.summaryItem}>
-                   <span className={styles.summaryLabel}>Fakturaadress:</span>
-                   <span className={styles.summaryValue}>{invoiceAddressValue}</span>
-                 </div>
-                 {facilityHandlingValue && (
+                 {showInvoiceAddress && (
                    <div className={styles.summaryItem}>
-                     <span className={styles.summaryLabel}>Anläggnings-ID:</span>
-                     <span className={styles.summaryValue}>{facilityHandlingValue}</span>
+                     <span className={styles.summaryLabel}>Fakturaadress:</span>
+                     <span className={styles.summaryValue}>{invoiceAddressValue}</span>
                    </div>
                  )}
-                 {state.scenario === 'FLYTT' && moveChoiceLabel && (
+                 {facilityHandlingValue && (
                    <div className={styles.summaryItem}>
-                     <span className={styles.summaryLabel}>Valt flyttspår:</span>
-                     <span className={styles.summaryValue}>{moveChoiceLabel}</span>
+                     <span className={styles.summaryLabel}>{facilityHandlingLabel}:</span>
+                     <span className={styles.summaryValue}>{facilityHandlingValue}</span>
                    </div>
                  )}
                  {state.selectedProduct?.pricePerKwh !== undefined && (
                    <div className={styles.summaryItem}>
-                     <span className={styles.summaryLabel}>Pris:</span>
-                     <span className={styles.summaryValue}>{state.selectedProduct.pricePerKwh.toFixed(2)} öre/kWh</span>
-                   </div>
+                   <span className={styles.summaryLabel}>Pris:</span>
+                   <span className={styles.summaryValue}>{state.selectedProduct.pricePerKwh.toFixed(2)} öre/kWh</span>
+                 </div>
                  )}
                </div>
              </div>
@@ -124,7 +152,7 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
         {status === 'PENDING' && (
           <div className={styles.pendingView}>
             <div className={styles.spinner}></div>
-            <p className={styles.pendingText}>Väntar på din underskrift...</p>
+            <p className={styles.pendingText}>Väntar på signering...</p>
             <div className={styles.qrPlaceholder}>
               (QR KOD HÄR)
             </div>
@@ -134,7 +162,7 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
         {status === 'SUCCESS' && (
           <div className={styles.successView}>
             <div className={styles.successIcon}>✅</div>
-            <p className={styles.successText}>Signering klar!</p>
+            <p className={styles.successText}>Signering genomförd!</p>
           </div>
         )}
       </div>

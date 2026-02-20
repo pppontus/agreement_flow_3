@@ -29,7 +29,7 @@ export const ExistingContractExtrasIntro = ({
           : 'Du har redan ett aktivt avtal på adressen'}
       </h2>
       <p className={styles.description}>
-        Vi ser att avtalet redan finns. Du kan fortfarande komplettera med extratjänster direkt.
+        Du har redan avtalet här, men du kan fortfarande lägga till extratjänster.
       </p>
 
       <div className={styles.actions}>

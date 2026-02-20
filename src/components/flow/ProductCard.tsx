@@ -3,10 +3,6 @@ import { Button } from '@/components/ui/Button';
 import { Product } from '@/types';
 import styles from './ProductCard.module.css';
 
-interface ProductWithPrice extends Product {
-  pricePerKwh: number;
-}
-
 interface ProductCardProps {
   product: Product;
   onSelect: () => void;
@@ -51,7 +47,7 @@ export const ProductCard = ({
           fullWidth 
           onClick={onSelect}
         >
-          Teckna
+          Välj avtal
         </Button>
         {isActionRestricted && restrictedMessage && (
           <p className={styles.disabledMessage}>{restrictedMessage}</p>

@@ -18,7 +18,7 @@ export const RiskInfo = ({ onConfirm, onBack, productType }: RiskInfoProps) => {
       <header className={styles.header}>
         <h2 className={styles.title}>Viktig information om ditt avtal</h2>
         <p className={styles.subtitle}>
-          Eftersom du valt ett {productType === 'FAST' ? 'fastprisavtal' : productType === 'KVARTS' ? 'kvartsprisavtal' : 'avtal'} behöver vi informera om följande.
+          Detta gäller för ditt {productType === 'FAST' ? 'fastprisavtal' : productType === 'KVARTS' ? 'kvartsprisavtal' : 'avtal'}.
         </p>
       </header>
 
@@ -26,8 +26,8 @@ export const RiskInfo = ({ onConfirm, onBack, productType }: RiskInfoProps) => {
         <h3 className={styles.infoTitle}>Viktigt att veta</h3>
         <p className={styles.text}>
           {productType === 'FAST' 
-            ? "Eftersom du valt ett fastprisavtal är du skyddad mot prishöjningar, men om du bryter avtalet i förtid kan en brytavgift tillkomma."
-            : "Priset på elmarknaden varierar och kan påverka din månadskostnad över tid."
+            ? "Fast pris skyddar mot prishöjningar, men brytavgift kan tillkomma om avtalet avslutas i förtid."
+            : "Priset varierar över tid och kan påverka din månadskostnad."
           }
         </p>
         <a href="#" className={styles.moreInfoLink}>Läs mer om risker</a>

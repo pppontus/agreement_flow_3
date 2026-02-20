@@ -95,17 +95,17 @@ export const AppDownloadPrompt = ({
       <div className={styles.icon}>📲</div>
 
       <header className={styles.header}>
-        <h2 className={styles.title}>Nästa steg: ladda ner appen</h2>
+        <h2 className={styles.title}>Ladda ner Bixia-appen</h2>
         <p className={styles.subtitle}>
-          I appen kan du följa din förbrukning, se avtal och få bättre koll på din energi.
-          {hasFinalExtrasStep ? ' Därefter får du ett sista frivilligt steg med kontaktönskemål.' : ''}
+          I appen ser du avtal och förbrukning.
+          {hasFinalExtrasStep ? ' Därefter kommer ett sista frivilligt steg.' : ''}
         </p>
       </header>
 
       <div className={styles.selectionSummary}>
         {hasAnySelection ? (
           <>
-            <h3 className={styles.summaryTitle}>Dina val hittills</h3>
+            <h3 className={styles.summaryTitle}>Dina extratjänster</h3>
             {selectedDirectServices.length > 0 && (
               <p className={styles.summaryText}>
                 Du har valt {joinItems(selectedDirectServices)}.
@@ -118,7 +118,7 @@ export const AppDownloadPrompt = ({
               </p>
             )}
             <div className={styles.priceBox}>
-              <h4 className={styles.priceTitle}>Kostnadsöversikt tillägg</h4>
+              <h4 className={styles.priceTitle}>Kostnad</h4>
               {selection?.bixiaNara.selected && (
                 <div className={styles.priceRow}>
                   <span>Bixia nära{selection.bixiaNara.county ? ` (${selection.bixiaNara.county})` : ''}</span>
@@ -151,7 +151,7 @@ export const AppDownloadPrompt = ({
           <>
             <h3 className={styles.summaryTitle}>Inga extratjänster valda</h3>
             <p className={styles.summaryText}>
-              Du kan alltid lägga till tjänster senare i Mina sidor.
+              Du kan lägga till tjänster senare i Mina sidor.
             </p>
           </>
         )}
@@ -202,7 +202,7 @@ export const AppDownloadPrompt = ({
 
       <div className={styles.footer}>
         <Button fullWidth onClick={onContinue}>
-          {hasFinalExtrasStep ? 'Fortsätt till sista steget' : 'Gå till Mina Sidor'}
+          {hasFinalExtrasStep ? 'Fortsätt' : 'Gå till Mina Sidor'}
         </Button>
         {onBack && (
           <button className={styles.backLink} onClick={onBack}>

@@ -628,7 +628,7 @@ export const PrivateFlow = () => {
           }}
           initialRegion={state.elomrade || undefined}
           hideRegionSelector
-          notice="Innan du kan gå vidare behöver du välja en konkret avtalsform för den här adressen."
+          notice="Välj avtalsform för adressen för att gå vidare."
         />
       )}
 
@@ -649,7 +649,7 @@ export const PrivateFlow = () => {
             onBack={handleBack}
             bankIdOnly={requireBankIdVerification}
             securityMessage={requireBankIdVerification 
-              ? 'Du är redan kund hos oss! För din säkerhet behöver du verifiera dig med BankID.' 
+              ? 'Du är redan kund hos oss. Verifiera dig med BankID för att fortsätta.' 
               : undefined
             }
           />

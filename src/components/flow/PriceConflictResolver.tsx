@@ -32,8 +32,8 @@ export const PriceConflictResolver = () => {
           <div className={styles.icon}>⚠️</div>
           <h2 className={styles.title}>Avtalet finns inte i elområde {elomrade}</h2>
           <p className={styles.description}>
-            Det valda avtalet "{selectedProduct.name}" är tyvärr inte tillgängligt för den adress du valt.
-            Vänligen välj ett av de tillgängliga avtalen nedan för att gå vidare.
+            Avtalet &quot;{selectedProduct.name}&quot; finns inte för den här adressen.
+            Välj ett annat avtal för att fortsätta.
           </p>
         </div>
 
@@ -70,7 +70,7 @@ export const PriceConflictResolver = () => {
         <h2 className={styles.title}>Priset har uppdaterats</h2>
         <p className={styles.description}>
           Adressen du har valt ligger i elområde <strong>{elomrade}</strong>. 
-          För detta område gäller ett annat pris än det som visades tidigare.
+          Där gäller ett annat pris än det som visades tidigare.
         </p>
 
         <div className={styles.priceBox}>

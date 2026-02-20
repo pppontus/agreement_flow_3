@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Address } from '@/types';
@@ -17,12 +17,12 @@ interface AddressSearchProps {
 export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: AddressSearchProps) => {
   const { state: devState } = useDevPanel();
   
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(suggestedAddress ? formatAddress(suggestedAddress) : '');
   const [results, setResults] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showList, setShowList] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(suggestedAddress || null);
   
   // Apartment details
   const [apartmentNumber, setApartmentNumber] = useState('');
@@ -35,12 +35,19 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
   const [showCo, setShowCo] = useState(false);
   const [coValue, setCoValue] = useState('');
 
-  useEffect(() => {
-    // If we have a suggested address and haven't interacted yet, pre-fill it
-    if (suggestedAddress && !hasSearched && !selectedAddress && query === '') {
-      handleSelect(suggestedAddress);
-    }
-  }, [suggestedAddress]);
+  const handleSelect = useCallback((addr: Address) => {
+    setSelectedAddress(addr);
+    setQuery(formatAddress(addr));
+    setShowList(false);
+    // Reset or set pre-filled apt details
+    setApartmentNumber(addr.apartmentNumber || '');
+    setAptError('');
+    setShowManualApt(false);
+    setApartmentList([]);
+    // Reset c/o
+    setShowCo(false);
+    setCoValue('');
+  }, []);
 
   useEffect(() => {
     const search = async () => {
@@ -70,7 +77,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
 
     const debounce = setTimeout(search, 300);
     return () => clearTimeout(debounce);
-  }, [query, selectedAddress]);
+  }, [query, selectedAddress, devState.isOpen, devState.mockAddressResult]);
 
   // Load apartment list when a LGH address is selected
   useEffect(() => {
@@ -86,28 +93,19 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
         setIsAptsLoading(false);
       };
       loadApts();
-    } else {
-      setApartmentList([]);
     }
   }, [selectedAddress]);
-
-  const handleSelect = (addr: Address) => {
-    setSelectedAddress(addr);
-    setQuery(formatAddress(addr));
-    setShowList(false);
-    // Reset or set pre-filled apt details
-    setApartmentNumber(addr.apartmentNumber || '');
-    setAptError('');
-    setShowManualApt(false);
-    // Reset c/o
-    setShowCo(false);
-    setCoValue('');
-  };
 
   const handleInputChange = (val: string) => {
     setQuery(val);
     if (selectedAddress) {
       setSelectedAddress(null);
+      setApartmentList([]);
+      setApartmentNumber('');
+      setShowManualApt(false);
+      setAptError('');
+      setShowCo(false);
+      setCoValue('');
     }
   };
 
@@ -133,17 +131,13 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2 className={styles.title}>Var ska elen levereras?</h2>
+        <h2 className={styles.title}>Vilken adress gäller det?</h2>
       </div>
-
-
-
-      {!selectedAddress && <p className={styles.subtitle}>Eller sök efter adressen där du vill ha elavtal</p>}
 
       <div className={styles.searchWrapper}>
         <Input
           label="Adress"
-          placeholder="Sök gatuadress, postnummer eller ort..."
+          placeholder="Sök adress..."
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           autoFocus
@@ -174,7 +168,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
 
           {!isLoading && showList && hasSearched && results.length === 0 && (
             <div className={styles.noResults}>
-              Inga adresser hittades för "{query}"
+              {`Ingen adress hittades för "${query}"`}
             </div>
           )}
         </div>
@@ -251,7 +245,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
                 className={styles.toggleManual}
                 onClick={() => setShowManualApt(true)}
               >
-                Hittar du inte din lägenhet? Ange manuellt
+                Ange lägenhetsnummer manuellt
               </button>
             ) : (
               <div className={styles.apartmentRow}>
@@ -280,11 +274,11 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
           onClick={handleConfirm}
           className={styles.confirmButton}
         >
-          Gå vidare
+          Fortsätt
         </Button>
         {onBack && (
           <button className={styles.backLink} onClick={onBack}>
-            ← Tillbaka till produktval
+            ← Tillbaka
           </button>
         )}
       </div>

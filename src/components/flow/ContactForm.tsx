@@ -294,7 +294,7 @@ export const ContactForm = ({
         <header className={styles.header}>
           <h2 className={styles.title}>Stämmer dina uppgifter?</h2>
           <p className={styles.subtitle}>
-            Vi behöver bekräfta dina kontaktuppgifter.
+            Kontrollera att allt stämmer.
           </p>
         </header>
 
@@ -334,13 +334,13 @@ export const ContactForm = ({
             onClick={handleSubmit} 
             className={styles.continueButton}
           >
-            Ja, fortsätt
+            Stämmer, fortsätt
           </Button>
           <button 
             className={styles.backLink} 
             onClick={() => setIsConfirming(false)}
           >
-            Nej, ändra uppgifter
+            Ändra uppgifter
           </button>
         </div>
       </div>
@@ -352,7 +352,7 @@ export const ContactForm = ({
       <header className={styles.header}>
         <h2 className={styles.title}>Dina kontaktuppgifter</h2>
         <p className={styles.subtitle}>
-          Vart ska vi skicka bekräftelsen och fakturan?
+          Var ska vi skicka bekräftelse och faktura?
         </p>
       </header>
 
@@ -396,11 +396,11 @@ export const ContactForm = ({
                 onChange={(e) => setUseRecommendedInvoice(e.target.checked)}
               />
               <span>
-                Använd {formatAddress(recommendedInvoiceAddress)} som fakturaadress
+                Använd samma adress för faktura
               </span>
             </label>
             <p className={styles.invoiceHint}>
-              Avmarkera om fakturan ska skickas till annan adress.
+              Nuvarande adress: {formatAddress(recommendedInvoiceAddress)}. Avmarkera om du vill ange en annan fakturaadress.
             </p>
           </section>
         )}
@@ -410,7 +410,7 @@ export const ContactForm = ({
             <div className={addressSearchStyles.searchWrapper}>
               <Input
                 label="Fakturaadress"
-                placeholder="Sök gatuadress, postnummer eller ort..."
+                placeholder="Sök adress..."
                 value={invoiceQuery}
                 onChange={(e) => handleInvoiceInputChange(e.target.value)}
                 autoComplete="street-address"
@@ -511,7 +511,7 @@ export const ContactForm = ({
                     className={addressSearchStyles.toggleManual}
                     onClick={() => setShowManualInvoiceApt(true)}
                   >
-                    Hittar du inte din lägenhet? Ange manuellt
+                    Ange lägenhetsnummer manuellt
                   </button>
                 ) : (
                   <div className={addressSearchStyles.apartmentRow}>
@@ -546,7 +546,7 @@ export const ContactForm = ({
           onClick={handleSubmit}
           className={styles.continueButton}
         >
-          Gå till signering
+          Fortsätt till signering
         </Button>
         <button className={styles.backLink} onClick={onBack}>
           ← Tillbaka

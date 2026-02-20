@@ -22,22 +22,22 @@ const CONTACT_ME_SERVICES: Array<{
   {
     id: 'HOME_BATTERY',
     title: 'Hembatteri',
-    description: 'Lagra solel och använd den när elen är som dyrast.',
+    description: 'Lagra solel och använd den när elen är dyr.',
   },
   {
     id: 'CHARGER',
     title: 'Laddbox',
-    description: 'Säker och smart hemmaladdning med rätt effektstyrning.',
+    description: 'Smart och säker laddning hemma.',
   },
   {
     id: 'SOLAR',
     title: 'Solceller',
-    description: 'Producera egen el och sänk dina långsiktiga energikostnader.',
+    description: 'Producera egen el och sänk dina elkostnader.',
   },
   {
     id: 'ATTIC_INSULATION',
     title: 'Tilläggsisolera vinden',
-    description: 'Minska värmeförluster och förbättra energiprestandan i hemmet.',
+    description: 'Minska värmeförluster i hemmet.',
   },
 ];
 
@@ -106,7 +106,7 @@ export const ExtraOfferContactMe = ({
       <div className={styles.container}>
         <header className={styles.header}>
           <h2 className={styles.title}>Tack för ditt intresse!</h2>
-          <p className={styles.subtitle}>Dina önskemål är sparade.</p>
+          <p className={styles.subtitle}>Vi har sparat dina önskemål.</p>
         </header>
 
         <section className={styles.card}>
@@ -125,14 +125,14 @@ export const ExtraOfferContactMe = ({
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>Vill du att vi kontaktar dig om fler tjänster?</h2>
+        <h2 className={styles.title}>Vill du bli kontaktad om fler tjänster?</h2>
         <p className={styles.subtitle}>
-          Frivilligt steg. Kryssa i det du vill veta mer om, eller gå vidare direkt.
+          Valfritt. Välj det du vill veta mer om.
         </p>
       </header>
 
       <section className={styles.card}>
-        <h3 className={styles.sectionTitle}>Kontakta mig om</h3>
+        <h3 className={styles.sectionTitle}>Jag vill veta mer om</h3>
         {availableServices.length > 0 ? (
           <div className={styles.checkboxList}>
             {availableServices.map((service) => (
@@ -161,7 +161,7 @@ export const ExtraOfferContactMe = ({
 
       <div className={styles.actions}>
         <Button onClick={() => submitSelection(selectedServices, true)} disabled={isSubmitting} fullWidth>
-          {isSubmitting ? 'Sparar...' : 'Spara val'}
+          {isSubmitting ? 'Sparar...' : 'Spara och fortsätt'}
         </Button>
         <Button variant="outline" onClick={() => submitSelection([], false)} disabled={isSubmitting} fullWidth>
           Hoppa över

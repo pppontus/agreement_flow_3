@@ -26,27 +26,44 @@ export const Confirmation = ({
   canSelectExtraServices,
   onContinue,
 }: ConfirmationProps) => {
+  const isSameAddress = (
+    a: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined,
+    b: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined
+  ) => {
+    if (!a || !b) return false;
+    return (
+      a.street === b.street &&
+      a.number === b.number &&
+      a.postalCode === b.postalCode &&
+      a.city === b.city &&
+      (a.apartmentNumber || '') === (b.apartmentNumber || '')
+    );
+  };
+
   const facilitySummaryText = (() => {
     if (!facilityHandling) return null;
     if (facilityHandling.mode === 'FROM_CRM') {
-      return `${facilityHandling.facilityId || '-'} (hämtat från CRM)`;
+      return facilityHandling.facilityId || '-';
     }
     if (facilityHandling.mode === 'FETCH_WITH_POWER_OF_ATTORNEY') {
-      return 'Hämtas via fullmakt. Fullmakt skickas till dig.';
+      return 'Hämtas via fullmakt';
     }
     return facilityHandling.facilityId || '-';
   })();
 
   const invoiceSummaryText = invoice?.address ? formatInvoiceAddress(invoice) : null;
+  const showInvoiceAddress =
+    !!invoice?.address &&
+    !isSameAddress(invoice.address, address);
 
   return (
     <div className={styles.container}>
       <div className={styles.iconWrapper}>🎉</div>
 
       <header className={styles.header}>
-        <h2 className={styles.title}>Tack för din beställning!</h2>
+        <h2 className={styles.title}>Tack, din beställning är klar!</h2>
         <p className={styles.subtitle}>
-          Du är nu kund hos Bixia. Din order <strong>{orderId}</strong> är mottagen.
+          Ordernummer: <strong>{orderId}</strong>
         </p>
       </header>
 
@@ -60,10 +77,10 @@ export const Confirmation = ({
           <span className={styles.value}>{address ? formatAddress(address) : '-'}</span>
         </div>
         <div className={styles.row}>
-          <span className={styles.label}>Bekräftelse skickad till:</span>
+          <span className={styles.label}>Bekräftelse skickas till:</span>
           <span className={styles.value}>{email || '-'}</span>
         </div>
-        {invoiceSummaryText && (
+        {showInvoiceAddress && invoiceSummaryText && (
           <div className={styles.row}>
             <span className={styles.label}>Fakturaadress:</span>
             <span className={styles.value}>{invoiceSummaryText}</span>
@@ -80,16 +97,16 @@ export const Confirmation = ({
       <section className={styles.extrasSection}>
         {canSelectExtraServices ? (
           <>
-            <h3 className={styles.extrasTitle}>Klart med avtalet. Vill du komplettera med extratjänster?</h3>
+            <h3 className={styles.extrasTitle}>Vill du lägga till extratjänster?</h3>
             <p className={styles.extrasSubtitle}>
-              Fortsätt till val av extratjänster.
+              Fortsätt för att välja.
             </p>
           </>
         ) : (
           <>
-            <h3 className={styles.extrasTitle}>Klart med avtalet.</h3>
+            <h3 className={styles.extrasTitle}>Klart!</h3>
             <p className={styles.extrasSubtitle}>
-              Fortsätt till nästa steg.
+              Du kan nu gå vidare till Mina sidor.
             </p>
           </>
         )}

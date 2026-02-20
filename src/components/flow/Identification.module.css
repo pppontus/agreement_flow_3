@@ -198,6 +198,12 @@
   animation: fadeIn var(--transition-normal);
 }
 
+.manualInfo {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
 .actions {
   display: flex;
   flex-direction: row-reverse;

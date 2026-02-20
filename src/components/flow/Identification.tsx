@@ -30,13 +30,9 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
     }
   }, [view, onAuthenticated]);
 
-  // Reset view to METHOD_SELECT when bankIdOnly prop changes to true
-  // This ensures user sees the BankID-only interface after security check
-  useEffect(() => {
-    if (bankIdOnly) {
-      setView('METHOD_SELECT');
-    }
-  }, [bankIdOnly]);
+  const effectiveView: ViewState = bankIdOnly
+    ? (view === 'BANKID_PENDING' ? 'BANKID_PENDING' : 'METHOD_SELECT')
+    : view;
 
   const handleManualSubmit = () => {
     // Strip all non-digit characters
@@ -55,14 +51,14 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>{bankIdOnly ? 'Verifiera med BankID' : 'Identifiering'}</h2>
+        <h2 className={styles.title}>{bankIdOnly ? 'Verifiera med BankID' : 'Spara tid med BankID'}</h2>
         <p className={styles.subtitle}>
-          {securityMessage || 'Vi behöver veta vem du är för att hämta dina uppgifter.'}
+          {securityMessage || 'Med BankID fyller vi i dina uppgifter automatiskt.'}
         </p>
       </header>
 
       <div className={styles.content}>
-        {view === 'METHOD_SELECT' && (
+        {effectiveView === 'METHOD_SELECT' && (
           <div className={styles.methodSelect}>
             <Button 
               variant="primary" 
@@ -71,7 +67,7 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
               className={styles.bankIdButton}
             >
               <span className={styles.bankIdIcon}>📲</span>
-              Mobilt BankID
+              Fyll i mina uppgifter automatiskt (sparar ca 3 min)
             </Button>
             
             {!bankIdOnly && (
@@ -84,14 +80,14 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
                   className={styles.manualLink}
                   onClick={() => setView('MANUAL_PNR')}
                 >
-                  Jag har inte BankID / Vill ange manuellt
+                  Fyll i uppgifter manuellt
                 </button>
               </>
             )}
           </div>
         )}
 
-        {view === 'BANKID_PENDING' && (
+        {effectiveView === 'BANKID_PENDING' && (
           <div className={styles.bankIdPending}>
             <div className={styles.qrContainer}>
               {/* Simulated QR code */}
@@ -105,10 +101,10 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
                 </div>
               </div>
             </div>
-            <p className={styles.pendingText}>Skanna QR-koden med din BankID-app för att logga in.</p>
+            <p className={styles.pendingText}>Skanna QR-koden i BankID-appen.</p>
             <div className={styles.bankIdActions}>
               <div className={styles.smallSpinner}></div>
-              <span>Väntar på skanning...</span>
+              <span>Väntar på BankID...</span>
             </div>
             <Button variant="outline" onClick={() => setView('METHOD_SELECT')}>
               Avbryt
@@ -116,8 +112,9 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
           </div>
         )}
 
-        {view === 'MANUAL_PNR' && (
+        {effectiveView === 'MANUAL_PNR' && (
           <div className={styles.manualPnr}>
+            <p className={styles.manualInfo}>BankID krävs när du signerar avtalet.</p>
             <Input 
               label="Personnummer"
               placeholder="ÅÅÅÅMMDD-XXXX"
@@ -137,14 +134,14 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
                 className={styles.backLink}
                 onClick={() => setView('METHOD_SELECT')}
               >
-                ← Tillbaka till metodval
+                ← Tillbaka till val
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {view === 'METHOD_SELECT' && (
+      {effectiveView === 'METHOD_SELECT' && (
         <button className={styles.globalBackLink} onClick={onBack}>
           ← Tillbaka till adress
         </button>

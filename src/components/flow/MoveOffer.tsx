@@ -25,13 +25,13 @@ export const MoveOffer = ({ currentAddress, newAddress, selectedChoice, onMove, 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>Vi hittade ett befintligt avtal</h2>
+        <h2 className={styles.title}>Du har redan ett avtal hos Bixia</h2>
         <p className={styles.subtitle}>
-          Du har redan ett aktivt elavtal på <strong>{formatAddress(currentAddress)}</strong>.
+          På <strong>{formatAddress(currentAddress)}</strong> har du redan ett avtal.
         </p>
         {selectedChoiceLabel && (
           <p className={styles.subtitle}>
-            Nuvarande val: <strong>{selectedChoiceLabel}</strong>.
+            Ditt val just nu: <strong>{selectedChoiceLabel}</strong>.
           </p>
         )}
       </header>
@@ -40,10 +40,10 @@ export const MoveOffer = ({ currentAddress, newAddress, selectedChoice, onMove, 
         <div className={styles.choice}>
           <div className={styles.iconWrapper}>🚚</div>
           <div className={styles.choiceContent}>
-            <h3 className={styles.choiceTitle}>Flytta befintligt avtal</h3>
+            <h3 className={styles.choiceTitle}>Flytta mitt nuvarande avtal</h3>
             <p className={styles.choiceDesc}>
-              Flytta ditt nuvarande avtal till <strong>{formatAddress(newAddress)}</strong>. 
-              Ditt avtal på den gamla adressen avslutas i samband med flytten.
+              Vi flyttar ditt nuvarande avtal till <strong>{formatAddress(newAddress)}</strong>.
+              Avtalet på din tidigare adress avslutas samtidigt.
             </p>
             <Button variant="primary" fullWidth onClick={onMove}>
               Ja, jag vill flytta med mitt avtal
@@ -52,15 +52,15 @@ export const MoveOffer = ({ currentAddress, newAddress, selectedChoice, onMove, 
         </div>
 
         <div className={styles.divider}>
-          <span>ELLER</span>
+          <span>eller</span>
         </div>
 
         <div className={styles.choice}>
           <div className={styles.iconWrapper}>🏠</div>
           <div className={styles.choiceContent}>
-            <h3 className={styles.choiceTitle}>Lägg till ytterligare adress</h3>
+            <h3 className={styles.choiceTitle}>Teckna avtal för ytterligare adress</h3>
             <p className={styles.choiceDesc}>
-              Behåll ditt nuvarande avtal på <strong>{formatAddress(currentAddress)}</strong> och teckna ett <strong>nytt avtal</strong> för <strong>{formatAddress(newAddress)}</strong>.
+              Behåll avtalet på <strong>{formatAddress(currentAddress)}</strong> och teckna ett nytt avtal för <strong>{formatAddress(newAddress)}</strong>.
             </p>
             <Button variant="primary" fullWidth onClick={onNew}>
               Teckna nytt avtal för denna adress

@@ -85,15 +85,15 @@ export const ExtraOfferBixiaNara = ({
     <div className={styles.container}>
       <header className={styles.header}>
         <h2 className={styles.title}>Vill du lägga till Bixia nära?</h2>
-        <p className={styles.subtitle}>Stötta lokala elproducenter med ett enkelt tillval.</p>
+        <p className={styles.subtitle}>Stötta lokala elproducenter.</p>
       </header>
 
       <section className={styles.card}>
         <h3 className={styles.serviceName}>Bixia nära</h3>
         <p className={styles.description}>
-          Med Bixia nära stöttar du lokala elproducenter och bidrar till mer närproducerad el i ditt område.
+          Ett tillval där du stöttar lokala elproducenter i ditt område.
         </p>
-        <p className={styles.priceLine}>Kostnad: {BIXIA_NARA_MONTHLY_SEK} kr/mån</p>
+        <p className={styles.priceLine}>Pris: {BIXIA_NARA_MONTHLY_SEK} kr/mån</p>
 
         <div className={styles.section}>
           <Select
@@ -119,7 +119,7 @@ export const ExtraOfferBixiaNara = ({
 
       <div className={styles.actions}>
         <Button onClick={handleAdd} fullWidth>
-          {initialSelected ? 'Uppdatera val' : 'Ja, lägg till Bixia nära'}
+          {initialSelected ? 'Uppdatera val' : 'Lägg till Bixia nära'}
         </Button>
         <Button variant="outline" onClick={handleSkip} fullWidth>
           Nej tack

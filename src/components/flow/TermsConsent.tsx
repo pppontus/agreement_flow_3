@@ -76,9 +76,9 @@ export const TermsConsent = ({
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>Villkor & Samtycke</h2>
+        <h2 className={styles.title}>Godkänn villkor</h2>
         <p className={styles.subtitle}>
-          Nästan klart! Godkänn villkoren för att gå vidare till signering.
+          Godkänn villkoren för att gå vidare till signering.
         </p>
       </header>
 
@@ -86,7 +86,7 @@ export const TermsConsent = ({
         {requiresFacilityId && (
           <div className={styles.facilitySection}>
             <p className={styles.facilityInfoText}>
-              Ett anläggnings-ID är en unik kod för din elmätare som du hittar hos ditt nätbolag, oftast på din elfaktura.
+              Anläggnings-ID är 18 siffror och finns oftast på fakturan från ditt nätbolag.
             </p>
             
             <label className={`${styles.checkboxLabel} ${fetchFacilityId ? styles.checked : ''}`}>
@@ -100,7 +100,7 @@ export const TermsConsent = ({
                 className={styles.checkbox}
               />
               <span className={styles.labelText}>
-                Jag godkänner att Bixia hämtar mitt anläggnings-ID åt mig med fullmakt.
+                Jag ger Bixia fullmakt att hämta anläggnings-ID.
               </span>
             </label>
 
@@ -118,7 +118,7 @@ export const TermsConsent = ({
                   error={facilityIdError}
                   maxLength={18}
                 />
-                <p className={styles.helperText}>Ditt anläggnings-ID består av 18 siffror och börjar oftast på 735999.</p>
+                <p className={styles.helperText}>Anläggnings-ID börjar oftast med 735999.</p>
               </div>
             )}
             <div className={styles.divider}></div>
@@ -133,7 +133,7 @@ export const TermsConsent = ({
             className={styles.checkbox}
           />
           <span className={styles.labelText}>
-            Jag godkänner <a href="#" className={styles.link}>villkoren</a> samt intygar att jag tagit del av <a href="#" className={styles.link}>ångerrätt</a> och <a href="#" className={styles.link}>integritetspolicy</a>.
+            Jag godkänner <a href="#" className={styles.link}>avtalsvillkoren</a> och har läst <a href="#" className={styles.link}>ångerrätt</a> och <a href="#" className={styles.link}>integritetspolicy</a>.
           </span>
         </label>
       </div>
@@ -142,15 +142,15 @@ export const TermsConsent = ({
         <>
           <div className={styles.divider}></div>
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Viktig information om ditt avtal</h3>
+            <h3 className={styles.sectionTitle}>Viktig information</h3>
             <p className={styles.sectionDesc}>
-              Eftersom du valt ett {productType === 'FAST' ? 'fastprisavtal' : 'kvartsprisavtal'} behöver vi informera om följande.
+              Detta gäller för ditt {productType === 'FAST' ? 'fastprisavtal' : 'kvartsprisavtal'}.
             </p>
             <div className={styles.riskInfoBox}>
               <p className={styles.riskInfoText}>
                 {productType === 'FAST'
-                  ? 'Eftersom du valt ett fastprisavtal är du skyddad mot prishöjningar, men om du bryter avtalet i förtid kan en brytavgift tillkomma.'
-                  : 'Priset på elmarknaden varierar och kan påverka din månadskostnad över tid.'}
+                  ? 'Fast pris skyddar mot prishöjningar, men brytavgift kan tillkomma om avtalet avslutas i förtid.'
+                  : 'Priset varierar över tid och kan påverka din månadskostnad.'}
               </p>
               <a href="#" className={styles.riskInfoLink}>Läs mer om risker</a>
             </div>
@@ -173,9 +173,9 @@ export const TermsConsent = ({
         <>
           <div className={styles.divider}></div>
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Håll dig uppdaterad (Valfritt)</h3>
+            <h3 className={styles.sectionTitle}>Utskick (valfritt)</h3>
             <p className={styles.sectionDesc}>
-              Få smarta energitips och erbjudanden från Bixia.
+              Jag vill få tips och erbjudanden från Bixia.
             </p>
             
             <div className={styles.marketingOptions}>
@@ -213,7 +213,7 @@ export const TermsConsent = ({
           onClick={handleContinue}
           className={styles.continueButton}
         >
-          Gå vidare till signering
+          Till signering
         </Button>
         <button className={styles.backLink} onClick={onBack}>
           ← Tillbaka

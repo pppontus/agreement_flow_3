@@ -262,39 +262,13 @@ Status 2026-02-20:
 - `PrivateFlow` routar till stoppvy när scenario-anropet returnerar stopporsak.
 - Stoppvyn har både "Gå tillbaka" och "Börja om".
 
----
+Statusnotis 2026-02-20:
 
-### [ ] P1.3 Justera appsteg efter bekräftelse till frivillig del av upplevelsen
-
-Problem:
-
-- `APP_DOWNLOAD` är idag obligatoriskt steg i flödet.
-- För intern test av avtal kan det skapa onödig friktion.
-
-Målbeteende:
-
-- Användare kan avsluta direkt efter bekräftelse, men fortfarande få app-CTA.
-
-Filer att ändra:
-
-- `src/components/flows/PrivateFlow.tsx`
-- `src/components/flow/Confirmation.tsx`
-- `src/components/flow/AppDownloadPrompt.tsx`
-
-Implementation (MVP-nivå):
-
-- Gör appsteg valbart:
-- "Gå till Mina Sidor" direkt
-- "Ladda ner appen" som sekundär väg
-
-Acceptance criteria:
-
-- Flödet kan avslutas utan extra steg.
-- Appnedladdning finns kvar som testbar branch.
+- Beslut: `APP_DOWNLOAD` ska visas för alla kunder och behålls som obligatoriskt steg i MVP.
 
 ## P2 - Nice to have men värdefullt för testkvalitet
 
-### [ ] P2.1 Gör signeringssammanfattningen mer komplett
+### [X] P2.1 Gör signeringssammanfattningen mer komplett
 
 Lägg till i `SigningFlow`:
 
@@ -307,9 +281,15 @@ Mål:
 
 - Testare kan visuellt validera att "allt jag valde blev rätt".
 
+Status 2026-02-20:
+
+- `SigningFlow` visar nu tydligt avtalsspår (flytt/nyteckning/byte), fakturaadress + fakturaadressval och anläggnings-ID med källa/hanteringssätt.
+- Marknadsföringssamtycke (e-post/SMS) visas explicit i sammanfattningen.
+- Villkorsgodkännande och riskinfo visas i sammanfattningen för snabb testvalidering.
+
 ---
 
-### [ ] P2.2 Förbättra copy för realism och konsekvens
+### [X] P2.2 Förbättra copy för realism och konsekvens
 
 Fokuskomponenter:
 
@@ -322,6 +302,12 @@ Fokuskomponenter:
 Mål:
 
 - Mindre "prototypkänsla", mer realistisk kunddialog.
+
+Status 2026-02-20:
+
+- Uppdaterad och harmoniserad copy i `MoveOffer`, `StartDatePicker`, `TermsConsent`, `SigningFlow` och `Confirmation`.
+- Kortare och mer kundnära formuleringar i rubriker, hjälptexyter och CTA:er.
+- Konsekventa begrepp för avtalsspår, fakturaadress, samtycken och nästa steg.
 
 ---
 
@@ -344,12 +330,12 @@ Etapp B (Stabil demo):
 
 - [X] P1.1
 - [X] P1.2
-- P1.3
+- Appsteg behålls obligatoriskt (beslut 2026-02-20)
 
 Etapp C (Polish):
 
-- P2.1
-- P2.2
+- [X] P2.1
+- [X] P2.2
 - P2.3
 
 ## 5) Data- och state-kontrakt att införa (MVP)
@@ -443,11 +429,10 @@ När arbetet lämnas över ska följande finnas:
 
 ## 9) Nästa rekommenderade steg (nu)
 
-Nästa steg: **P1.3 Justera appsteg efter bekräftelse till frivillig del av upplevelsen**.
+Nästa steg: **P2.3 Lägg enkel "scenario playback"-checklista i DevPanel**.
 
 Viktigt att få med:
 
-- Ge användaren två tydliga val efter bekräftelse: avsluta direkt eller gå via appsteg.
-- Behåll appsteget testbart, men gör det till en sekundär/valfri väg.
-- Säkerställ att extra-tjänstflödet fortfarande fungerar logiskt när appsteget hoppas över.
-- Säkerställ att back-navigation och avslut känns konsekvent i båda vägarna.
+- Visa aktivt scenario, avtalsspår och nyckelval i en kompakt checklista i DevPanel.
+- Gör checklistan lätt att använda live under demo/testledning.
+- Säkerställ att checklistan uppdateras direkt när användaren gör nya val i flödet.

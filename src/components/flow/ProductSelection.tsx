@@ -87,15 +87,6 @@ export const ProductSelection = ({
 
   return (
     <div className={styles.container}>
-      {!hasSelectedAddress && (
-        <section className={styles.conceptSection}>
-          <p className={styles.conceptText}>
-            Denna sida representerar en valfri undersida på bixia.se. I det här konceptet har vi brutit ut &quot;produktkorten&quot; 
-            så att de kan placeras var som helst på hemsidan för att inleda avtalsflödet därifrån.
-          </p>
-        </section>
-      )}
-
       <header className={styles.header}>
         <h2 className={styles.title}>Välj elavtal</h2>
         {!hasSelectedAddress && (
@@ -125,13 +116,13 @@ export const ProductSelection = ({
             className={styles.advisorLink}
             onClick={() => setShowAdvisor(true)}
           >
-            💡 Hjälp mig välja avtalsform
+            💡 Hjälp mig välja
           </button>
         )}
 
         {discountedProducts.length > 0 && (
           <div className={styles.toggleWrapper}>
-            <span className={styles.toggleLabel}>Visa rabatterade avtal</span>
+            <span className={styles.toggleLabel}>Visa rabattavtal</span>
             <label className={styles.switch}>
               <input 
                 type="checkbox" 
@@ -154,7 +145,7 @@ export const ProductSelection = ({
             onSelect={() => handleSelectProduct(product)}
             showVat={!isCompany}
             isActionRestricted={isRestricted}
-            restrictedMessage={isRestricted ? 'Avtalet verkar inte tillgängligt i ditt område.' : undefined}
+            restrictedMessage={isRestricted ? 'Detta avtal finns inte i det här området.' : undefined}
           />
           );
         })}
@@ -163,7 +154,7 @@ export const ProductSelection = ({
       {!hasSelectedAddress && (
         <section className={styles.unspecifiedSection}>
           <header className={styles.header} style={{ marginTop: 'var(--space-2xl)' }}>
-            <h2 className={styles.title}>Ej specificerat avtal</h2>
+            <h2 className={styles.title}>Osäker på avtalsform?</h2>
           </header>
           <div className={styles.unspecifiedGrid}>
             <ProductCard 
@@ -171,7 +162,7 @@ export const ProductSelection = ({
                 id: 'GENERIC',
                 name: 'Teckna elavtal',
                 type: 'RORLIGT',
-                description: 'Vi hjälper dig välja rätt avtal baserat på din adress och behov.'
+                description: 'Välj senare. Vi guidar dig utifrån adressen.'
               }} 
               onSelect={() => handleSelectProduct({ id: 'GENERIC', name: 'Teckna elavtal', type: 'RORLIGT' } as Product)}
             />

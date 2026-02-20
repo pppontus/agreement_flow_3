@@ -14,17 +14,17 @@ const STOP_CONTENT: Record<StopReason, { title: string; description: string }> =
   CANNOT_DELIVER: {
     title: 'Vi kan inte leverera till denna adress just nu',
     description:
-      'Det går tyvärr inte att teckna avtal för den valda adressen i nuläget. Du kan kontrollera adressen eller kontakta kundservice för hjälp.',
+      'Du kan inte teckna avtal för den här adressen just nu. Kontrollera adressen eller kontakta kundservice.',
   },
   DUPLICATE_SAME_CONTRACT: {
     title: 'Det finns redan ett aktivt avtal på adressen',
     description:
-      'Vi kan inte skapa ett nytt identiskt avtal ovanpå det som redan finns. Gå tillbaka för att justera dina val eller kontakta oss.',
+      'Samma avtal finns redan på adressen. Gå tillbaka och välj ett annat avtal, eller kontakta oss.',
   },
   PENDING_CASE: {
     title: 'Det finns redan ett pågående ärende',
     description:
-      'Vi har redan en pågående beställning kopplad till dina uppgifter. Vänta tills ärendet är klart eller kontakta kundservice.',
+      'Du har redan en pågående beställning. Vänta tills den är klar eller kontakta kundservice.',
   },
 };
 

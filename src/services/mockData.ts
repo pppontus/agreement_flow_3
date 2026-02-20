@@ -5,19 +5,19 @@ export const PRODUCTS: Product[] = [
     id: '1',
     name: 'Bixia Fastpris',
     type: 'FAST',
-    description: 'Ett tryggt val med samma pris hela avtalsperioden. Ingen bindningstid.',
+    description: 'Samma pris under hela avtalsperioden.',
   },
   {
     id: '2',
     name: 'Bixia Rörligt Pris',
     type: 'RORLIGT',
-    description: 'Följer elbörsens svängningar. Passar dig som vill vara aktiv och flexibel.',
+    description: 'Priset följer elmarknaden över tid.',
   },
   {
     id: '3',
     name: 'Bixia Kvartspris',
     type: 'KVARTS',
-    description: 'Ett mellanting mellan fast och rörligt. Priset sätts kvartalsvis.',
+    description: 'Priset uppdateras löpande utifrån marknaden.',
   },
   // Company specific
   {
