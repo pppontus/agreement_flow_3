@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useFlowState } from '@/hooks/useFlowState';
 import { formatAddress, formatInvoiceAddress } from '@/services/addressService';
+import {
+  calculateComparePriceOrePerKwh,
+  getActiveCompareConsumptionKwh,
+  STANDARD_COMPARE_KWH_LEVELS,
+  isValidCustomConsumptionKwh,
+} from '@/services/comparePriceService';
 import styles from './SigningFlow.module.css';
 
 interface SigningFlowProps {
@@ -83,6 +89,49 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
       : state.moveChoice === 'NEW_ON_NEW_ADDRESS'
         ? 'När du signerar tecknar du ett nytt avtal för adressen ovan.'
         : 'När du signerar bekräftar du avtalet för adressen ovan.';
+  const formatter = new Intl.NumberFormat('sv-SE');
+  const activeCompareConsumption = getActiveCompareConsumptionKwh({
+    compareProfileKwh: state.compareProfileKwh,
+    customConsumptionKwh: state.customConsumptionKwh,
+  });
+  const selectedProduct = state.selectedProduct;
+  const hasDetailedPrice =
+    selectedProduct?.energyPriceOrePerKwh !== undefined &&
+    selectedProduct?.surchargeOrePerKwh !== undefined &&
+    selectedProduct?.fixedFeeSekPerMonth !== undefined &&
+    selectedProduct?.otherFeeSekPerMonth !== undefined;
+  const contractTerms = (() => {
+    if (selectedProduct?.type === 'FAST') {
+      return {
+        binding: '12 månader',
+        termination: '1 månad',
+      };
+    }
+    if (state.customer.contractEndDate) {
+      return {
+        binding: `Till ${state.customer.contractEndDate}`,
+        termination: '1 månad',
+      };
+    }
+    return {
+      binding: 'Ingen bindningstid',
+      termination: '1 månad',
+    };
+  })();
+  const compareRows = STANDARD_COMPARE_KWH_LEVELS.reduce<Array<{ kwh: number; price: number }>>(
+    (rows, kwh) => {
+      const price = calculateComparePriceOrePerKwh(selectedProduct, kwh);
+      if (price !== null) {
+        rows.push({ kwh, price });
+      }
+      return rows;
+    },
+    []
+  );
+  const customComparePrice = isValidCustomConsumptionKwh(state.customConsumptionKwh)
+    ? calculateComparePriceOrePerKwh(selectedProduct, state.customConsumptionKwh)
+    : null;
+  const activeProfilePrice = calculateComparePriceOrePerKwh(selectedProduct, activeCompareConsumption);
 
   return (
     <div className={styles.container}>
@@ -104,8 +153,8 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                  <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Avtal:</span>
                    <span className={styles.summaryValue}>
-                     {state.selectedProduct?.name}
-                     {state.selectedProduct?.isDiscounted && <span className={styles.summaryDiscountBadge}>Rabatterat</span>}
+                     {selectedProduct?.name}
+                     {selectedProduct?.isDiscounted && <span className={styles.summaryDiscountBadge}>Rabatterat</span>}
                    </span>
                  </div>
                  <div className={styles.summaryItem}>
@@ -122,6 +171,14 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                    <span className={styles.summaryLabel}>Startdatum:</span>
                    <span className={styles.summaryValue}>{state.startDate || '-'}</span>
                  </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Bindningstid:</span>
+                   <span className={styles.summaryValue}>{contractTerms.binding}</span>
+                 </div>
+                 <div className={styles.summaryItem}>
+                   <span className={styles.summaryLabel}>Uppsägningstid:</span>
+                   <span className={styles.summaryValue}>{contractTerms.termination}</span>
+                 </div>
                  {showInvoiceAddress && (
                    <div className={styles.summaryItem}>
                      <span className={styles.summaryLabel}>Fakturaadress:</span>
@@ -134,11 +191,61 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                      <span className={styles.summaryValue}>{facilityHandlingValue}</span>
                    </div>
                  )}
-                 {state.selectedProduct?.pricePerKwh !== undefined && (
+                 {selectedProduct && selectedProduct.pricePerKwh !== undefined && (
                    <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Pris:</span>
-                   <span className={styles.summaryValue}>{state.selectedProduct.pricePerKwh.toFixed(2)} öre/kWh</span>
+                   <span className={styles.summaryValue}>{selectedProduct.pricePerKwh.toFixed(2)} öre/kWh</span>
                  </div>
+                 )}
+
+                 {hasDetailedPrice && (
+                   <>
+                     <div className={styles.summaryItem}>
+                       <span className={styles.summaryLabel}>Elpris:</span>
+                       <span className={styles.summaryValue}>
+                         {selectedProduct?.energyPriceOrePerKwh?.toFixed(2)} öre/kWh
+                       </span>
+                     </div>
+                     <div className={styles.summaryItem}>
+                       <span className={styles.summaryLabel}>Påslag:</span>
+                       <span className={styles.summaryValue}>
+                         {selectedProduct?.surchargeOrePerKwh?.toFixed(2)} öre/kWh
+                       </span>
+                     </div>
+                     <div className={styles.summaryItem}>
+                       <span className={styles.summaryLabel}>Fast avgift:</span>
+                       <span className={styles.summaryValue}>
+                         {selectedProduct?.fixedFeeSekPerMonth?.toFixed(0)} kr/mån
+                       </span>
+                     </div>
+                     <div className={styles.summaryItem}>
+                       <span className={styles.summaryLabel}>Övriga avgifter:</span>
+                       <span className={styles.summaryValue}>
+                         {selectedProduct?.otherFeeSekPerMonth?.toFixed(0)} kr/mån
+                       </span>
+                     </div>
+                     {activeProfilePrice !== null && (
+                       <div className={`${styles.summaryItem} ${styles.summaryItemStrong}`}>
+                         <span className={styles.summaryLabel}>Jämförpris (din profil):</span>
+                         <span className={styles.summaryValue}>{activeProfilePrice.toFixed(2)} öre/kWh</span>
+                       </div>
+                     )}
+                     {compareRows.map((row) => (
+                       <div key={row.kwh} className={styles.summaryItem}>
+                         <span className={styles.summaryLabel}>Jämförpris ({formatter.format(row.kwh)} kWh):</span>
+                         <span className={styles.summaryValue}>{row.price.toFixed(2)} öre/kWh</span>
+                       </div>
+                     ))}
+                     {customComparePrice !== null && state.customConsumptionKwh && (
+                       <div className={styles.summaryItem}>
+                         <span className={styles.summaryLabel}>Jämförpris (egen {formatter.format(state.customConsumptionKwh)} kWh):</span>
+                         <span className={styles.summaryValue}>{customComparePrice.toFixed(2)} öre/kWh</span>
+                       </div>
+                     )}
+                     <div className={styles.summaryNotice}>
+                       Detta avser elhandelsavtalet med Bixia. Elnätsavgift och energiskatt faktureras av ditt nätbolag och ingår inte här.
+                     </div>
+                   </>
                  )}
                </div>
              </div>

@@ -2,6 +2,11 @@ export type EntryPoint = 'ADDRESS_FIRST' | 'PRODUCT_FIRST';
 export type Scenario = 'UNKNOWN' | 'NY' | 'BYTE' | 'FLYTT' | 'EXTRA';
 export type IdMethod = 'BANKID_MOBILE' | 'BANKID_QR' | 'MANUAL_PNR';
 export type MoveChoice = 'MOVE_EXISTING' | 'NEW_ON_NEW_ADDRESS';
+export type HousingType =
+  | 'KWH_2000'
+  | 'KWH_5000'
+  | 'KWH_20000';
+export type CompareProfileKwh = number;
 export type FacilityHandling = {
   mode: 'FETCH_WITH_POWER_OF_ATTORNEY' | 'MANUAL' | 'FROM_CRM';
   facilityId: string | null;
@@ -65,6 +70,9 @@ export type PrivateCaseState = {
   // Address Context
   valdAdress: Address | null;
   moveChoice: MoveChoice | null;
+  housingType: HousingType | null;
+  compareProfileKwh: CompareProfileKwh | null;
+  customConsumptionKwh: number | null;
   facilityHandling: FacilityHandling | null;
   invoice: Invoice | null;
   addressDetails: {
@@ -122,6 +130,10 @@ export type Product = {
   name: string;
   type: 'FAST' | 'RORLIGT' | 'KVARTS' | 'FORVALTAT';
   description: string;
+  energyPriceOrePerKwh?: number;
+  surchargeOrePerKwh?: number;
+  fixedFeeSekPerMonth?: number;
+  otherFeeSekPerMonth?: number;
   pricePerKwh?: number;
   isDiscounted?: boolean;
   discountText?: string;

@@ -1,4 +1,8 @@
 import { Product } from '@/types';
+import {
+  calculateComparePriceOrePerKwh,
+  DEFAULT_COMPARE_PROFILE_KWH,
+} from './comparePriceService';
 
 export const PRODUCTS: Product[] = [
   {
@@ -64,8 +68,37 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-// Mock prices per region (öre/kWh)
-export const REGIONAL_PRICES: Record<string, Record<string, number>> = {
+type PriceComponents = {
+  energyPriceOrePerKwh: number;
+  surchargeOrePerKwh: number;
+  fixedFeeSekPerMonth: number;
+  otherFeeSekPerMonth: number;
+};
+
+const buildComponents = (
+  comparePriceAt5000: number,
+  surchargeOrePerKwh: number
+): PriceComponents => {
+  const fixedFeeSekPerMonth = 25;
+  const otherFeeSekPerMonth = 0;
+  const fixedPartOrePerKwh = ((fixedFeeSekPerMonth + otherFeeSekPerMonth) * 12 * 100) / DEFAULT_COMPARE_PROFILE_KWH;
+  return {
+    energyPriceOrePerKwh: comparePriceAt5000 - surchargeOrePerKwh - fixedPartOrePerKwh,
+    surchargeOrePerKwh,
+    fixedFeeSekPerMonth,
+    otherFeeSekPerMonth,
+  };
+};
+
+const surchargeByProductType = (productId: string): number => {
+  if (productId.startsWith('2') || productId.startsWith('d2')) return 1.5;
+  if (productId.startsWith('c')) return 2.2;
+  if (productId.startsWith('1') || productId.startsWith('d1')) return 2.5;
+  return 2.0;
+};
+
+// Mock compare prices per region (öre/kWh) for 5 000 kWh/år.
+const REGIONAL_COMPARE_PRICES: Record<string, Record<string, number>> = {
   SE1: {
     '1': 85.50, '2': 75.20, '3': 80.00,
     'd1': 83.50, 'd2': 73.20, 'd3': 78.00,
@@ -88,12 +121,24 @@ export const REGIONAL_PRICES: Record<string, Record<string, number>> = {
   },
 };
 
+const REGIONAL_PRICE_COMPONENTS: Record<string, Record<string, PriceComponents>> = Object.fromEntries(
+  Object.entries(REGIONAL_COMPARE_PRICES).map(([region, prices]) => [
+    region,
+    Object.fromEntries(
+      Object.entries(prices).map(([productId, comparePrice]) => [
+        productId,
+        buildComponents(comparePrice, surchargeByProductType(productId)),
+      ])
+    ),
+  ])
+);
+
 export const getProductsForRegion = (
   region: string,
   isCompany = false,
   includeRestrictedFast = false
 ) => {
-  const prices = REGIONAL_PRICES[region] || REGIONAL_PRICES['SE3']; // Default to SE3
+  const regionalComponents = REGIONAL_PRICE_COMPONENTS[region] || REGIONAL_PRICE_COMPONENTS['SE3']; // Default to SE3
   
   const availableProducts = PRODUCTS.filter(product => {
     // Company logic: Show Managed (FORVALTAT), Hide Fixed (FAST)
@@ -116,6 +161,10 @@ export const getProductsForRegion = (
   
   return availableProducts.map(product => ({
     ...product,
-    pricePerKwh: prices[product.id],
+    ...regionalComponents[product.id],
+    pricePerKwh: calculateComparePriceOrePerKwh(
+      { ...product, ...regionalComponents[product.id] },
+      DEFAULT_COMPARE_PROFILE_KWH
+    ) || undefined,
   }));
 };

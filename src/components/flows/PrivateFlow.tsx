@@ -24,6 +24,8 @@ import { detectRegion } from '@/services/regionService';
 import { useDevPanel } from '@/context/DevPanelContext';
 import { PriceConflictResolver } from '@/components/flow/PriceConflictResolver';
 import { CONTACT_ME_SERVICE_IDS, ExtraServicesSelection, saveExtraServicesSelection } from '@/services/extraServicesService';
+import { Button } from '@/components/ui/Button';
+import styles from './PrivateFlow.module.css';
 
 type FlowStep = 
   | 'PRODUCT_SELECT'
@@ -81,7 +83,22 @@ export const PrivateFlow = () => {
   const normalizedStepParam = stepParam === 'RISK_INFO' ? 'TERMS' : stepParam;
   const currentStep: FlowStep = isValidFlowStep(normalizedStepParam) ? normalizedStepParam : 'PRODUCT_SELECT';
   
-  const { state: rawState, isInitialized, selectProduct, setAddress, setAuthenticated, setCustomerScenario, setMoveChoice, setFacilityHandling, setInvoice, setCustomerDetails, setElomrade, setConsents, resetState } = useFlowState();
+  const {
+    state: rawState,
+    isInitialized,
+    selectProduct,
+    setAddress,
+    setAuthenticated,
+    setCustomerScenario,
+    setMoveChoice,
+    setCompareProfile,
+    setFacilityHandling,
+    setInvoice,
+    setCustomerDetails,
+    setElomrade,
+    setConsents,
+    resetState,
+  } = useFlowState();
   const { state: devState, setCurrentPhase } = useDevPanel();
   const isPrivateFlow = rawState.customerType === 'PRIVATE';
   const state = rawState as PrivateCaseState;
@@ -129,6 +146,12 @@ export const PrivateFlow = () => {
     !isSameAddress(state.customer.folkbokforing, state.valdAdress)
       ? state.valdAdress
       : null;
+  const genericStartProduct: Product = {
+    id: 'GENERIC',
+    name: 'Teckna elavtal',
+    type: 'RORLIGT',
+    description: 'Välj avtalsform i nästa steg.',
+  };
 
   // Local state for the DETAILS step to manage substeps (Date -> Contact)
   const [detailsSubStep, setDetailsSubStep] = useState<'DATE' | 'CONTACT'>('DATE');
@@ -607,7 +630,27 @@ export const PrivateFlow = () => {
   return (
     <>
       {currentStep === 'PRODUCT_SELECT' && (
-        <ProductSelection onProductSelect={handleProductSelect} />
+        <div className={styles.startPageSections}>
+          <ProductSelection
+            title="Våra elavtal"
+            onProductSelect={handleProductSelect}
+            showGenericOptionSection={false}
+            compareConfig={{
+              housingType: state.housingType,
+              compareProfileKwh: state.compareProfileKwh,
+              customConsumptionKwh: state.customConsumptionKwh,
+            }}
+            onCompareConfigChange={setCompareProfile}
+          />
+
+          <section className={styles.ctaSection}>
+            <h3 className={styles.ctaTitle}>Teckna elavtal</h3>
+            <div className={styles.ctaRow}>
+              <Button onClick={() => handleProductSelect(genericStartProduct)}>Teckna elavtal</Button>
+            </div>
+            <p className={styles.ctaText}>Du väljer avtalsform i nästa steg.</p>
+          </section>
+        </div>
       )}
 
       {currentStep === 'PRODUCT_CLARIFY' && (
@@ -629,6 +672,12 @@ export const PrivateFlow = () => {
           initialRegion={state.elomrade || undefined}
           hideRegionSelector
           notice="Välj avtalsform för adressen för att gå vidare."
+          compareConfig={{
+            housingType: state.housingType,
+            compareProfileKwh: state.compareProfileKwh,
+            customConsumptionKwh: state.customConsumptionKwh,
+          }}
+          onCompareConfigChange={setCompareProfile}
         />
       )}
 

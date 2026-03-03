@@ -60,30 +60,40 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
       <div className={styles.content}>
         {effectiveView === 'METHOD_SELECT' && (
           <div className={styles.methodSelect}>
-            <Button 
-              variant="primary" 
-              fullWidth 
-              onClick={() => setView('BANKID_PENDING')}
-              className={styles.bankIdButton}
-            >
-              <span className={styles.bankIdIcon}>📲</span>
-              Fyll i mina uppgifter automatiskt (sparar ca 3 min)
-            </Button>
-            
-            {!bankIdOnly && (
-              <>
-                <div className={styles.divider}>
-                  <span>eller</span>
-                </div>
+            <div className={styles.stepsOverview}>
+              <p className={styles.stepsHeading}>Så här går det till:</p>
+              <ol className={styles.stepsList}>
+                <li>Välj identifieringsmetod</li>
+                <li>Vi hämtar dina uppgifter</li>
+                <li>Du går vidare i flödet</li>
+              </ol>
+            </div>
 
-                <button 
-                  className={styles.manualLink}
+            <div className={styles.methodOptions}>
+              <button
+                className={`${styles.methodCard} ${styles.methodCardPrimary}`}
+                onClick={() => setView('BANKID_PENDING')}
+              >
+                <span className={styles.methodIcon}>📲</span>
+                <span className={styles.methodText}>
+                  <span className={styles.methodTitle}>Fortsätt med BankID</span>
+                  <span className={styles.methodMeta}>Snabbast, vi fyller i uppgifter åt dig.</span>
+                </span>
+              </button>
+
+              {!bankIdOnly && (
+                <button
+                  className={styles.methodCard}
                   onClick={() => setView('MANUAL_PNR')}
                 >
-                  Fyll i uppgifter manuellt
+                  <span className={styles.methodIcon}>📝</span>
+                  <span className={styles.methodText}>
+                    <span className={styles.methodTitle}>Fortsätt manuellt</span>
+                    <span className={styles.methodMeta}>Du fyller i personnummer själv.</span>
+                  </span>
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
         )}
 

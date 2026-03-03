@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade, MoveChoice, FacilityHandling, Invoice, ScenarioCustomer } from '@/types';
+import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade, MoveChoice, FacilityHandling, Invoice, ScenarioCustomer, HousingType, CompareProfileKwh } from '@/types';
 import { CompanyState, CompanyLookupData, Facility } from '@/types/company';
 
 const INITIAL_PRIVATE_STATE: PrivateCaseState = {
@@ -12,6 +12,9 @@ const INITIAL_PRIVATE_STATE: PrivateCaseState = {
   elomrade: null,
   valdAdress: null,
   moveChoice: null,
+  housingType: 'KWH_5000',
+  compareProfileKwh: 5000,
+  customConsumptionKwh: null,
   facilityHandling: null,
   invoice: null,
   addressDetails: {
@@ -61,7 +64,7 @@ const INITIAL_COMPANY_STATE: CompanyState = {
 
 const INITIAL_STATE: CaseState = INITIAL_PRIVATE_STATE;
 
-const STORAGE_KEY = 'bixia_flow_state_v4'; // Bump version since structure changed
+const STORAGE_KEY = 'bixia_flow_state_v6'; // Bump version since structure changed
 
 interface FlowStateContextType {
   state: CaseState;
@@ -73,6 +76,11 @@ interface FlowStateContextType {
   setAuthenticated: (pnr: string, method: IdMethod) => void;
   setCustomerScenario: (scenario: Scenario, customer: ScenarioCustomer) => void;
   setMoveChoice: (choice: MoveChoice) => void;
+  setCompareProfile: (profile: {
+    housingType?: HousingType | null;
+    compareProfileKwh?: CompareProfileKwh | null;
+    customConsumptionKwh?: number | null;
+  }) => void;
   setFacilityHandling: (handling: FacilityHandling | null) => void;
   setInvoice: (invoice: Invoice | null) => void;
   setCustomerDetails: (details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => void;
@@ -206,6 +214,22 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const setCompareProfile = useCallback((profile: {
+    housingType?: HousingType | null;
+    compareProfileKwh?: CompareProfileKwh | null;
+    customConsumptionKwh?: number | null;
+  }) => {
+    setState(prev => {
+      if (prev.customerType !== 'PRIVATE') return prev;
+      return {
+        ...prev,
+        housingType: profile.housingType !== undefined ? profile.housingType : prev.housingType,
+        compareProfileKwh: profile.compareProfileKwh !== undefined ? profile.compareProfileKwh : prev.compareProfileKwh,
+        customConsumptionKwh: profile.customConsumptionKwh !== undefined ? profile.customConsumptionKwh : prev.customConsumptionKwh,
+      };
+    });
+  }, []);
+
   const setFacilityHandling = useCallback((handling: FacilityHandling | null) => {
     setState(prev => {
       if (prev.customerType !== 'PRIVATE') return prev;
@@ -327,6 +351,7 @@ export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
       setAuthenticated, 
       setCustomerScenario,
       setMoveChoice,
+      setCompareProfile,
       setFacilityHandling,
       setInvoice,
       setCustomerDetails,

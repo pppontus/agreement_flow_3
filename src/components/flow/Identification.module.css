@@ -26,60 +26,88 @@
 .methodSelect {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   animation: fadeIn var(--transition-normal);
 }
 
-.bankIdButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  height: 60px;
-  font-size: var(--font-size-lg);
+.stepsOverview {
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
 }
 
-.bankIdIcon {
-  font-size: 24px;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--color-text-muted);
+.stepsHeading {
+  margin: 0 0 var(--space-xs) 0;
   font-size: var(--font-size-sm);
-  margin: var(--space-sm) 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.divider:not(:empty)::before {
-  margin-right: var(--space-md);
-}
-
-.divider:not(:empty)::after {
-  margin-left: var(--space-md);
-}
-
-.manualLink {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  font-family: inherit;
-  padding: var(--space-sm);
-}
-
-.manualLink:hover {
+  font-weight: 600;
   color: var(--color-text-primary);
-  text-decoration: underline;
+}
+
+.stepsList {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  display: grid;
+  gap: 2px;
+}
+
+.methodOptions {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.methodCard {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  padding: var(--space-md);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.methodCard:hover {
+  border-color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.methodCardPrimary {
+  border-color: var(--color-text-primary);
+}
+
+.methodCardPrimary:hover {
+  background: var(--color-bg-selected);
+}
+
+.methodIcon {
+  font-size: 20px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.methodText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.methodTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.methodMeta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
 }
 
 .bankIdPending {
