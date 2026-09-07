@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FacilityLoop } from '@/components/company/FacilityLoop';
 import { CompanyGatekeeper } from '@/components/company/CompanyGatekeeper';
@@ -6,9 +6,13 @@ import { CompanySearch } from '@/components/company/CompanySearch';
 import { CompanyLookupResult } from '@/services/companyService';
 import { ProductSelection } from '@/components/flow/ProductSelection';
 import { Product } from '@/types';
-import { useFlowState } from '@/hooks/useFlowState';
+import { useFlowState } from '@/context/FlowStateContext';
 
 export type CompanyStep = 'PRODUCT_SELECT' | 'GATEKEEPER' | 'SEARCH' | 'FACILITIES_LOOP';
+const COMPANY_STEPS: readonly CompanyStep[] = ['PRODUCT_SELECT', 'GATEKEEPER', 'SEARCH', 'FACILITIES_LOOP'];
+
+const isCompanyStep = (value: string | null): value is CompanyStep =>
+  typeof value === 'string' && COMPANY_STEPS.includes(value as CompanyStep);
 
 interface CompanyFlowProps {
   onStepChange?: (step: CompanyStep) => void;
@@ -18,7 +22,8 @@ export const CompanyFlow = ({ onStepChange }: CompanyFlowProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentStep = (searchParams.get('companyStep') as CompanyStep) || 'PRODUCT_SELECT';
+  const stepParam = searchParams.get('companyStep');
+  const currentStep: CompanyStep = isCompanyStep(stepParam) ? stepParam : 'PRODUCT_SELECT';
 
   const {
     state: rawState,
@@ -29,15 +34,13 @@ export const CompanyFlow = ({ onStepChange }: CompanyFlowProps) => {
     setCompanyFacilities,
   } = useFlowState();
 
-  if (!isInitialized) return null;
-  if (rawState.customerType !== 'COMPANY') return null;
-  const state = rawState;
+  const state = rawState.customerType === 'COMPANY' ? rawState : null;
 
-  const goToStep = (step: CompanyStep) => {
+  const goToStep = useCallback((step: CompanyStep) => {
     const params = new URLSearchParams(searchParams);
     params.set('companyStep', step);
     router.push(`${pathname}?${params.toString()}`);
-  };
+  }, [pathname, router, searchParams]);
 
   const handleProductSelect = (product: Product) => {
     setCompanyProduct(product);
@@ -62,20 +65,25 @@ export const CompanyFlow = ({ onStepChange }: CompanyFlowProps) => {
   const handleFacilitiesComplete = setCompanyFacilities;
 
   useEffect(() => {
+    if (!isInitialized || !state) return;
     if (currentStep !== 'PRODUCT_SELECT' && !state.selectedProduct) {
       goToStep('PRODUCT_SELECT');
     }
-  }, [currentStep, state.selectedProduct]);
+  }, [currentStep, goToStep, isInitialized, state]);
 
   useEffect(() => {
+    if (!isInitialized || !state) return;
     if (currentStep === 'FACILITIES_LOOP' && !state.companyName) {
       goToStep('SEARCH');
     }
-  }, [currentStep, state.companyName]);
+  }, [currentStep, goToStep, isInitialized, state]);
 
   useEffect(() => {
+    if (!isInitialized || !state) return;
     onStepChange?.(currentStep);
-  }, [currentStep, onStepChange]);
+  }, [currentStep, isInitialized, onStepChange, state]);
+
+  if (!isInitialized || !state) return null;
 
   return (
     <>

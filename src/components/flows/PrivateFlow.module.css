@@ -6,30 +6,6 @@
   gap: var(--space-xl);
 }
 
-.ctaRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.ctaSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.ctaTitle {
-  margin: 0;
-  font-size: var(--font-size-lg);
-}
-
-.ctaText {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.45;
-}
-
 @media (max-width: 720px) {
   .startPageSections {
     gap: var(--space-xl);

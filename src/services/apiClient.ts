@@ -7,8 +7,8 @@ export type ApiLogEntry = {
   id: string;
   timestamp: Date;
   endpoint: string;
-  request: any;
-  response: any;
+  request: unknown;
+  response: unknown;
   duration: number;
   type: 'GET' | 'POST' | 'SCENARIO' | 'IDENTIFY' | 'ADDRESS_SEARCH' | 'ADDRESS_DETAILS' | 'SIGNING' | 'COMPANY_SEARCH';
 };
@@ -38,7 +38,7 @@ export const apiLogEmitter = new ApiLogEmitter();
 export async function loggedApiCall<T>(
   endpoint: string,
   type: ApiLogEntry['type'],
-  request: any,
+  request: unknown,
   serviceCall: () => Promise<T>
 ): Promise<T> {
   const startTime = Date.now();
@@ -74,9 +74,3 @@ export async function loggedApiCall<T>(
     throw error;
   }
 }
-
-
-export const apiClient = {
-  loggedApiCall
-};
-

@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { loggedApiCall } from './apiClient';
 import { SignatoryType } from '@/types/company';
 
 export interface CompanyLookupResult {
@@ -64,7 +64,7 @@ export const lookupCompany = async (orgNr: string): Promise<CompanyLookupResult>
     ? `${cleanOrgNr.slice(0, 6)}-${cleanOrgNr.slice(6)}` 
     : orgNr;
 
-  return apiClient.loggedApiCall(
+  return loggedApiCall(
     `/api/company/${formattedOrgNr}`,
     'COMPANY_SEARCH',
     undefined,

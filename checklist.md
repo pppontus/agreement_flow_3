@@ -1,5 +1,7 @@
 # Bixia avtalsflöde (bixia.se) Guidelines för pris och avtalsinformation
 
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
 Syfte: Säkerställa att kunder förstår vad de köper, kan jämföra avtal, och får korrekt förhandsinformation innan avtal ingås.
 
 ## 1. Grundprinciper

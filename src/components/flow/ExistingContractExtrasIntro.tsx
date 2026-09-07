@@ -29,7 +29,9 @@ export const ExistingContractExtrasIntro = ({
           : 'Du har redan ett aktivt avtal på adressen'}
       </h2>
       <p className={styles.description}>
-        Du har redan avtalet här, men du kan fortfarande lägga till extratjänster.
+        {hasAnyExtrasToOffer
+          ? 'Du har redan avtalet här, men kan fortfarande lägga till extratjänster.'
+          : 'Du har redan avtalet och de extratjänster vi erbjuder här.'}
       </p>
 
       <div className={styles.actions}>
@@ -39,7 +41,7 @@ export const ExistingContractExtrasIntro = ({
           </Button>
         ) : (
           <Button fullWidth onClick={onDone}>
-            Gå till Mina Sidor
+            Fortsätt till appen
           </Button>
         )}
         <button className={styles.backLink} onClick={onBack}>

@@ -1,26 +1,25 @@
 "use client";
 
 import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { PrivateFlow } from "@/components/flows/PrivateFlow";
 import { CompanyFlow, CompanyStep } from "@/components/flows/CompanyFlow";
-import { useFlowState } from '@/hooks/useFlowState';
+import { useFlowState } from '@/context/FlowStateContext';
 import { useDevPanel } from '@/context/DevPanelContext';
 import styles from "./page.module.css";
 
 const FlowOrchestratorContent = () => {
-  const searchParams = useSearchParams();
-  const { state, setCustomerType, isInitialized } = useFlowState();
+  const { state, setCustomerType, isInitialized, storageUnavailable } = useFlowState();
   const { state: devState } = useDevPanel();
   const [companyStep, setCompanyStep] = useState<CompanyStep>('PRODUCT_SELECT');
 
   if (!isInitialized) return null;
 
   const isCompany = state.customerType === 'COMPANY';
-  const privateStep = searchParams.get('step') || 'PRODUCT_SELECT';
   const showCustomerSwitch = isCompany
     ? companyStep === 'PRODUCT_SELECT'
-    : privateStep === 'PRODUCT_SELECT';
+    : state.customerType === 'PRIVATE' && state.currentStep === (state.entryPoint === 'ADDRESS_FIRST'
+      ? 'ADDRESS_SEARCH'
+      : 'PRODUCT_SELECT');
 
   // Dynamic theme colors
   const bgColor = isCompany ? '#f0f4f8' : 'var(--color-bg)';
@@ -34,6 +33,7 @@ const FlowOrchestratorContent = () => {
         backgroundColor: bgColor
       }}
     >
+      {storageUnavailable && <p role="status">Uppgifterna kan inte sparas i den här fliken. Om du laddar om behöver du börja om.</p>}
       {showCustomerSwitch && (
         <div className={styles.tabs}>
           <button 
@@ -52,7 +52,7 @@ const FlowOrchestratorContent = () => {
       )}
 
       <Suspense fallback={<div>Laddar...</div>}>
-        {!isCompany ? <PrivateFlow /> : <CompanyFlow onStepChange={setCompanyStep} />}
+        {!isCompany ? <PrivateFlow key={state.customerType === 'PRIVATE' ? state.caseId || 'private-initial' : 'private'} /> : <CompanyFlow onStepChange={setCompanyStep} />}
       </Suspense>
     </main>
   );

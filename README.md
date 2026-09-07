@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Avtalsflöde
 
-## Getting Started
+Next.js-prototyp för Bixias avtalsflöden. Privatflödet är huvudspåret; företagsflödet är ännu ofullständigt. CRM, BankID och beställningar är mockade.
 
-First, run the development server:
+## Kom igång
+
+Använd Node 24 enligt `.nvmrc` (med nvm: `nvm use`).
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Öppna http://localhost:3000. Produktionen exporteras statiskt för GitHub Pages under `/agreement_flow_3`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Aktuella instruktioner och struktur
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [AGENTS.md](AGENTS.md): instruktioner för arbete i projektet.
+- [Arkitektur och beslut](docs/architecture.md): ansvar, tillstånd, navigering och lagring.
+- [Aktuell arbetslista](docs/work-plan.md): denna etapp och kommande arbete.
+- [Verifiering](docs/verification.md): körda kontroller och kvarvarande avgränsningar.
 
-## Learn More
+Rena regler finns i `src/flow`, reducer och lagringsvalidering i `src/state`, React-koppling i `src/context` och `src/hooks`, steg och samordning i `src/components`, mockade tjänster i `src/services`.
 
-To learn more about Next.js, take a look at the following resources:
+## Kvalitetskontroller
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Installera testwebbläsarna en gång:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx playwright install chromium webkit
+```
 
-## Deploy on Vercel
+```bash
+npm run verify
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Verifieringen kör lint, TypeScript, Node-tester, Playwright och produktionsbygge. Enskilda kommandon: `npm test`, `npm run lint`, `npm run typecheck`, `npm run test:e2e`, `npm run build`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Playwright startar en egen lokal server på port 3100 och använder Chromium, mobilbredd 390 px samt WebKit. Rapporter och spår vid fel hamnar i ignorerade testkataloger. CI kör samma kvalitetskrav på pull requests och före befintlig Pages-publicering.
+
+## Prototypbeteende
+
+Giltiga val och formulärutkast återställs efter omladdning i samma flik. Personnummer lagras inte. En pågående signering måste startas igen; en slutförd signering ger en beständig kvittens. Om lagring inte fungerar fortsätter flödet i minnet med en synlig upplysning.
+
+Devpanelen visas endast i utveckling, eller med `NEXT_PUBLIC_ENABLE_DEV_PANEL=true` i ett uttryckligt demobygge. Mockinställningarna är separerade från panelens synlighet.

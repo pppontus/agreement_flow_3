@@ -1,5 +1,7 @@
 # Plan och to-do: färdigställa företagsflödet (B2B) med privatflödet som bas
 
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
 Senast uppdaterad: 2026-02-10  
 Underlag: `convert_to_b2b.md` + nuvarande implementation i kodbasen.
 

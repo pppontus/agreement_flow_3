@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CompanySummary } from './CompanySummary';
 import { AddressSearch } from '@/components/flow/AddressSearch';
 import { ProductSelection } from '@/components/flow/ProductSelection';
@@ -19,31 +19,19 @@ interface FacilityLoopProps {
 type LoopView = 'HUB' | 'ADDRESS' | 'PRODUCT';
 
 export const FacilityLoop = ({ initialCount, globalProduct, onComplete, onBack }: FacilityLoopProps) => {
-  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>(() =>
+    Array.from({ length: initialCount }, (_, index) => ({
+      id: `temp-${index}`,
+      anlaggningId: `anl-${index}`,
+      address: '',
+      zipCode: '',
+      city: '',
+      annualConsumption: 0,
+    }))
+  );
   // Start directly in ADDRESS view for linear flow (count=1) to avoid flicker of HUB
   const [view, setView] = useState<LoopView>(initialCount === 1 ? 'ADDRESS' : 'HUB');
   const [currentIndex, setCurrentIndex] = useState<number | null>(initialCount === 1 ? 0 : null);
-
-  // Initialize facilities on mount
-  useEffect(() => {
-    if (facilities.length === 0 && initialCount > 0) {
-      const initialFacilities: Facility[] = Array.from({ length: initialCount }).map((_, i) => ({
-        id: `temp-${i}`,
-        anlaggningId: `anl-${i}`, // Mock ID
-        address: '',
-        zipCode: '',
-        city: '',
-        annualConsumption: 0
-      }));
-      setFacilities(initialFacilities);
-      
-      // LINEAR FLOW: If just 1 facility (default), start configuring it immediately
-      if (initialCount === 1) {
-        setCurrentIndex(0);
-        setView('ADDRESS');
-      }
-    }
-  }, [initialCount, facilities.length]);
 
   const handleConfigure = (index: number) => {
     setCurrentIndex(index);
@@ -67,7 +55,7 @@ export const FacilityLoop = ({ initialCount, globalProduct, onComplete, onBack }
     setView('ADDRESS');
   };
 
-  const handleAddressConfirm = (address: Address, details?: { number: string; co?: string }) => {
+  const handleAddressConfirm = (address: Address) => {
     if (currentIndex === null) return;
 
     // Create the updated facilities array locally
@@ -106,29 +94,23 @@ export const FacilityLoop = ({ initialCount, globalProduct, onComplete, onBack }
     }
   };
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = () => {
     if (currentIndex === null) return;
 
-    setFacilities(prev => {
-      const next = [...prev];
-      // Mocking consumption estimate based on product selection for now, 
-      // in reality this might come from the gatekeeper total / count or user input
-      next[currentIndex] = {
-        ...next[currentIndex],
-        annualConsumption: 25000, 
-      };
-      // If we are essentially done with this facility, and we are in linear flow, finish
-      if (initialCount === 1) {
-          onComplete(next);
-      }
-      return next;
-    });
+    const nextFacilities = [...facilities];
+    nextFacilities[currentIndex] = {
+      ...nextFacilities[currentIndex],
+      annualConsumption: 25000,
+    };
+    setFacilities(nextFacilities);
 
-    if (initialCount !== 1) {
-        // Return to hub
-        setView('HUB');
-        setCurrentIndex(null);
+    if (initialCount === 1) {
+      onComplete(nextFacilities);
+      return;
     }
+
+    setView('HUB');
+    setCurrentIndex(null);
   };
 
   const handleContinue = () => {

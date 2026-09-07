@@ -1,12 +1,17 @@
 "use client";
 
-import { useDevPanel, MockScenarioType, MockAddressResult, MockMarketingConsentType, FlowPhase } from '@/context/DevPanelContext';
-import { useFlowState } from '@/hooks/useFlowState';
+import { usePathname, useRouter } from 'next/navigation';
+import { useMockSettings } from '@/context/MockSettingsContext';
+import { useDevPanel } from '@/context/DevPanelContext';
+import type { FlowPhase, MockAddressResult, MockEntryPreset, MockMarketingConsentType, MockScenarioType } from '@/types/dev';
+import { useFlowState } from '@/context/FlowStateContext';
 import { formatInvoiceAddress } from '@/services/addressService';
+import { PRODUCTS } from '@/services/mockData';
 import styles from './DevPanel.module.css';
 
 // Phase-specific mock options
 const SCENARIO_OPTIONS: { value: MockScenarioType; label: string; description: string }[] = [
+  { value: 'ERROR', label: 'Fel vid kunduppslag', description: 'Simulerat tjänstefel för omförsök' },
   { value: 'NY_KUND', label: 'Ny kund', description: 'Kunden finns inte i systemet' },
   { value: 'FLYTT', label: 'Befintlig kund på annan adress', description: 'Kunden har ett befintligt avtal på en annan adress' },
   { value: 'BYTE', label: 'Kund med avtal (med bindning)', description: 'Befintlig kund med bindningstid' },
@@ -36,6 +41,12 @@ const EXISTING_EXTRAS_OPTIONS = [
   { key: 'ATTIC_INSULATION', label: 'Tilläggsisolera vinden', description: 'Kunden har redan tilläggsisolering' },
 ] as const;
 
+const ENTRY_OPTIONS: Array<{ value: MockEntryPreset; label: string; description: string }> = [
+  { value: 'GENERAL', label: 'Generell ingång', description: 'Adress först, därefter produktval' },
+  { value: 'PRODUCT_PAGE', label: 'Produktsida', description: 'Ett standardavtal är förvalt' },
+  { value: 'PARTNER', label: 'Partnererbjudande', description: 'Ett rabatterat avtal är förvalt' },
+];
+
 // ELOMRADE_OPTIONS removed
 
 const PHASE_LABELS: Record<FlowPhase, string> = {
@@ -57,22 +68,48 @@ const PHASE_LABELS: Record<FlowPhase, string> = {
 };
 
 export const DevPanel = () => {
-  const { 
-    state: devState, 
-    togglePanel, 
-    clearLogs, 
-    setMockScenario, 
-    setMockMarketingConsent,
-    setMockExistingExtra,
-    setMockAddressResult 
-  } = useDevPanel();
-  const { state: flowState, resetState } = useFlowState();
+  const router = useRouter();
+  const pathname = usePathname();
+  const panel = useDevPanel();
+  const settings = useMockSettings();
+  const devState = { ...panel.state, ...settings.state };
+  const { togglePanel, clearLogs } = panel;
+  const { setMockScenario, setMockEntryPreset, setMockEntryProductId,
+    setMockMarketingConsent, setMockExistingExtra, setMockAddressResult } = settings;
+
+  const { state: flowState, resetState, startPrivateFlow, clearPersistedState } = useFlowState();
+
+  const availableEntryProducts = PRODUCTS.filter((product) => {
+    if (product.isCompanyOnly) return false;
+    return devState.mockEntryPreset === 'PARTNER' ? !!product.isDiscounted : !product.isDiscounted;
+  });
+
+  const handleStartDemo = () => {
+    const isGeneral = devState.mockEntryPreset === 'GENERAL';
+    startPrivateFlow({
+      entryPoint: isGeneral ? 'ADDRESS_FIRST' : 'PRODUCT_FIRST',
+      entryOffer: isGeneral
+        ? null
+        : {
+            source: devState.mockEntryPreset === 'PARTNER' ? 'PARTNER' : 'PRODUCT_PAGE',
+            productId: devState.mockEntryProductId,
+          },
+    });
+    clearLogs();
+    router.push(`${pathname}?step=${isGeneral ? 'ADDRESS_SEARCH' : 'PRODUCT_SELECT'}`);
+  };
 
   const handleResetAll = () => {
     resetState();
     clearLogs();
-    sessionStorage.clear();
+    clearPersistedState();
     window.location.href = window.location.pathname;
+  };
+
+  const formatPersonalIdentityNumber = (value: string | null) => {
+    if (!value) return '—';
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 8 ? `${digits.slice(0, 8)}-****` : '********-****';
   };
 
   const formatTime = (date: Date) => {
@@ -99,6 +136,51 @@ export const DevPanel = () => {
     devState.mockScenario === 'AUTO_DETERMINISTIC';
   const showMarketingConsentMock = showScenarioMock && shouldShowExistingCustomerMocks;
   const showExistingExtrasMock = showScenarioMock && shouldShowExistingCustomerMocks;
+  const privateState = flowState.customerType === 'PRIVATE' ? flowState : null;
+  const selectedScenarioMock = SCENARIO_OPTIONS.find((option) => option.value === devState.mockScenario)?.label
+    || devState.mockScenario;
+  const activeEntryLabel = privateState?.entryPoint === 'ADDRESS_FIRST'
+    ? 'Generell, adress först'
+    : privateState?.entryOffer?.source === 'PARTNER'
+      ? 'Partnererbjudande'
+      : 'Produktsida';
+  const activeOffer = privateState?.entryOffer
+    ? PRODUCTS.find((product) => product.id === privateState.entryOffer?.productId)?.name || privateState.entryOffer.productId
+    : 'Inget förvalt erbjudande';
+  const agreementPath = !privateState
+    ? '—'
+    : privateState.scenario === 'FLYTT'
+      ? privateState.moveChoice === 'MOVE_EXISTING'
+        ? 'Flytta befintligt avtal'
+        : privateState.moveChoice === 'NEW_ON_NEW_ADDRESS'
+          ? 'Ytterligare adress'
+          : 'Väntar på flyttval'
+      : privateState.scenario === 'BYTE'
+        ? 'Byte på befintlig adress'
+        : privateState.scenario === 'EXTRA'
+          ? 'Samma avtal på adressen'
+          : privateState.scenario === 'NY'
+            ? 'Nyteckning'
+            : 'Inte bestämt';
+  const facilityValue = !privateState?.facilityHandling
+    ? '—'
+    : privateState.facilityHandling.mode === 'FETCH_WITH_POWER_OF_ATTORNEY'
+      ? 'Fullmakt'
+      : privateState.facilityHandling.facilityId || privateState.facilityHandling.mode;
+  const invoiceValue = privateState?.invoice?.address
+    ? formatInvoiceAddress(privateState.invoice)
+    : '—';
+  const existingExtras = privateState?.customer.extraServices;
+  const isAdditionalAddress = privateState?.moveChoice === 'NEW_ON_NEW_ADDRESS';
+  const existingContactServiceIds = new Set<string>(existingExtras?.contactMeServices ?? []);
+  const remainingExtras = [
+    isAdditionalAddress || !existingExtras?.bixiaNara.selected ? 'Bixia nära' : null,
+    isAdditionalAddress || !existingExtras?.realtimeMeter.selected ? 'Realtidsmätare' : null,
+    ...EXISTING_EXTRAS_OPTIONS
+      .filter((option) => !['BIXIA_NARA', 'REALTIME_METER'].includes(option.key))
+      .filter((option) => isAdditionalAddress || !existingContactServiceIds.has(option.key))
+      .map((option) => option.label),
+  ].filter((label): label is string => !!label);
 
   return (
     <>
@@ -133,6 +215,50 @@ export const DevPanel = () => {
         </div>
 
         <div className={styles.content}>
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Starta demo</h3>
+            <p className={styles.sectionDesc}>Välj hur kunden kommer in i flödet.</p>
+            <div className={styles.scenarioOptions}>
+              {ENTRY_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`${styles.scenarioOption} ${devState.mockEntryPreset === option.value ? styles.selected : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="mockEntryPreset"
+                    checked={devState.mockEntryPreset === option.value}
+                    onChange={() => setMockEntryPreset(option.value)}
+                    className={styles.radio}
+                  />
+                  <div className={styles.optionText}>
+                    <span className={styles.optionLabel}>{option.label}</span>
+                    <span className={styles.optionDesc}>{option.description}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {devState.mockEntryPreset !== 'GENERAL' && (
+              <label className={styles.selectLabel}>
+                Förvalt avtal
+                <select
+                  className={styles.select}
+                  value={devState.mockEntryProductId}
+                  onChange={(event) => setMockEntryProductId(event.target.value)}
+                >
+                  {availableEntryProducts.map((product) => (
+                    <option key={product.id} value={product.id}>{product.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            <button type="button" className={styles.startButton} onClick={handleStartDemo}>
+              Starta om med valda inställningar
+            </button>
+          </section>
+
           {/* Context-aware Mock Selector */}
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>⚙️ Nästa API-svar</h3>
@@ -259,6 +385,23 @@ export const DevPanel = () => {
             )}
           </section>
 
+          {privateState && (
+            <section className={styles.section}>
+              <h3 className={styles.sectionTitle}>Scenario playback</h3>
+              <div className={styles.stateBox}>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Ingång:</span><span className={styles.stateValue}>{activeEntryLabel}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Erbjudande:</span><span className={styles.stateValue}>{activeOffer}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Elområde:</span><span className={styles.stateValue}>{privateState.elomrade || '—'}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Valt CRM-mock:</span><span className={styles.stateValue}>{selectedScenarioMock}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Sparat scenario:</span><span className={styles.stateValue}>{privateState.scenario}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Avtalsspår:</span><span className={styles.stateValue}>{agreementPath}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Anläggnings-ID:</span><span className={styles.stateValue}>{facilityValue}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Fakturaadress:</span><span className={styles.stateValue}>{invoiceValue}</span></div>
+                <div className={styles.stateRow}><span className={styles.stateLabel}>Kvar att erbjuda:</span><span className={styles.stateValue}>{remainingExtras.join(', ') || 'Inga'}</span></div>
+              </div>
+            </section>
+          )}
+
           {/* Current Flow State */}
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>📊 Sparad data ({flowState.customerType})</h3>
@@ -297,7 +440,7 @@ export const DevPanel = () => {
                    </div>
                    <div className={styles.stateRow}>
                      <span className={styles.stateLabel}>Personnummer:</span>
-                     <span className={styles.stateValue}>{flowState.personnummer || '—'}</span>
+                     <span className={styles.stateValue}>{formatPersonalIdentityNumber(flowState.personnummer)}</span>
                    </div>
                    <div className={styles.stateRow}>
                      <span className={styles.stateLabel}>Scenario:</span>

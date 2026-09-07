@@ -147,6 +147,7 @@ export const ProductCard = ({
             variant={isActionRestricted ? 'secondary' : 'primary'}
             fullWidth
             onClick={onSelect}
+            disabled={isActionRestricted}
           >
             Välj avtal
           </Button>

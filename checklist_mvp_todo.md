@@ -1,5 +1,7 @@
 # To-do: pris- och avtalsinfo i MVP (baserat på checklistan + beslut)
 
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
 Senast uppdaterad: 2026-02-23  
 Underlag: `checklist.md` + genomgång av nuvarande MVP + beslut i tråden.
 

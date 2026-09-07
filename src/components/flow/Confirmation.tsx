@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/Button';
 import { Product, Address, FacilityHandling, Invoice } from '@/types';
 import { formatAddress, formatInvoiceAddress } from '@/services/addressService';
+import { areAddressesEqual } from '@/flow/privateFlow';
 import styles from './Confirmation.module.css';
 
 interface ConfirmationProps {
@@ -26,20 +27,6 @@ export const Confirmation = ({
   canSelectExtraServices,
   onContinue,
 }: ConfirmationProps) => {
-  const isSameAddress = (
-    a: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined,
-    b: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined
-  ) => {
-    if (!a || !b) return false;
-    return (
-      a.street === b.street &&
-      a.number === b.number &&
-      a.postalCode === b.postalCode &&
-      a.city === b.city &&
-      (a.apartmentNumber || '') === (b.apartmentNumber || '')
-    );
-  };
-
   const facilitySummaryText = (() => {
     if (!facilityHandling) return null;
     if (facilityHandling.mode === 'FROM_CRM') {
@@ -54,7 +41,7 @@ export const Confirmation = ({
   const invoiceSummaryText = invoice?.address ? formatInvoiceAddress(invoice) : null;
   const showInvoiceAddress =
     !!invoice?.address &&
-    !isSameAddress(invoice.address, address);
+    !areAddressesEqual(invoice.address, address, { includeApartmentNumber: true });
 
   return (
     <div className={styles.container}>
@@ -104,9 +91,9 @@ export const Confirmation = ({
           </>
         ) : (
           <>
-            <h3 className={styles.extrasTitle}>Klart!</h3>
+            <h3 className={styles.extrasTitle}>Fortsätt med Bixia-appen</h3>
             <p className={styles.extrasSubtitle}>
-              Du kan nu gå vidare till Mina sidor.
+              Där ser du ditt avtal och din förbrukning.
             </p>
           </>
         )}
@@ -114,7 +101,7 @@ export const Confirmation = ({
 
       <div className={styles.actions}>
         <Button onClick={onContinue} fullWidth>
-          {canSelectExtraServices ? 'Fortsätt till val av extratjänster' : 'Fortsätt'}
+          {canSelectExtraServices ? 'Fortsätt till val av extratjänster' : 'Fortsätt till appen'}
         </Button>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { Product } from '@/types';
+
+export const DEMO_ORDER_ID = 'ORD-123456';
 import {
   calculateComparePriceOrePerKwh,
   DEFAULT_COMPARE_PROFILE_KWH,
@@ -10,18 +12,21 @@ export const PRODUCTS: Product[] = [
     name: 'Bixia Fastpris',
     type: 'FAST',
     description: 'Samma pris under hela avtalsperioden.',
+    contractTerms: { bindingMonths: 12, noticeMonths: 1 },
   },
   {
     id: '2',
     name: 'Bixia Rörligt Pris',
     type: 'RORLIGT',
     description: 'Priset följer elmarknaden över tid.',
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
   {
     id: '3',
     name: 'Bixia Kvartspris',
     type: 'KVARTS',
     description: 'Priset uppdateras löpande utifrån marknaden.',
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
   // Company specific
   {
@@ -30,6 +35,7 @@ export const PRODUCTS: Product[] = [
     type: 'FORVALTAT',
     description: 'En tryggare portföljförvaltning som sprider riskerna över tid.',
     isCompanyOnly: true,
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
   // Discounted variants
   {
@@ -39,6 +45,7 @@ export const PRODUCTS: Product[] = [
     description: 'Samma trygghet som Fastpris men med exklusiv partner-rabatt.',
     isDiscounted: true,
     discountText: 'Partner-rabatt: -2 öre/kWh',
+    contractTerms: { bindingMonths: 12, noticeMonths: 1 },
   },
   {
     id: 'd2',
@@ -47,6 +54,7 @@ export const PRODUCTS: Product[] = [
     description: 'Rörligt elpris med förmånlig partner-rabatt på påslaget.',
     isDiscounted: true,
     discountText: 'Partner-rabatt: -2 öre/kWh',
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
   {
     id: 'd3',
@@ -55,6 +63,7 @@ export const PRODUCTS: Product[] = [
     description: 'Kvartspris för samarbetspartners. Optimerat pris med rabatt.',
     isDiscounted: true,
     discountText: 'Partner-rabatt: -2 öre/kWh',
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
   // Company discounted
   {
@@ -65,6 +74,7 @@ export const PRODUCTS: Product[] = [
     isDiscounted: true,
     isCompanyOnly: true,
     discountText: 'Partner-rabatt: -2 öre/kWh',
+    contractTerms: { bindingMonths: null, noticeMonths: 1 },
   },
 ];
 

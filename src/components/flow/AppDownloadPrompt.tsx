@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import {
   BIXIA_NARA_MONTHLY_SEK,
-  ContactMeServiceId,
-  ExtraServicesSelection,
   REALTIME_METER_MONTHLY_SEK,
   REALTIME_METER_ONE_TIME_SEK,
 } from '@/services/extraServicesService';
+import type { ContactInterestServiceId as ContactMeServiceId, ExtraServicesSelection } from '@/types';
 import styles from './AppDownloadPrompt.module.css';
 
 interface AppDownloadPromptProps {
@@ -102,9 +102,8 @@ export const AppDownloadPrompt = ({
         </p>
       </header>
 
-      <div className={styles.selectionSummary}>
-        {hasAnySelection ? (
-          <>
+      {hasAnySelection && (
+        <div className={styles.selectionSummary}>
             <h3 className={styles.summaryTitle}>Dina extratjänster</h3>
             {selectedDirectServices.length > 0 && (
               <p className={styles.summaryText}>
@@ -146,29 +145,21 @@ export const AppDownloadPrompt = ({
                 <span>{totalMonthly} kr/mån</span>
               </div>
             </div>
-          </>
-        ) : (
-          <>
-            <h3 className={styles.summaryTitle}>Inga extratjänster valda</h3>
-            <p className={styles.summaryText}>
-              Du kan lägga till tjänster senare i Mina sidor.
-            </p>
-          </>
-        )}
-      </div>
+        </div>
+      )}
 
       {deviceType === 'DESKTOP' ? (
         <div className={styles.qrGrid}>
           <div className={styles.qrCard}>
             <h3 className={styles.qrTitle}>iPhone (App Store)</h3>
-            <img src={iosQrUrl} alt="QR-kod för App Store" className={styles.qrImage} />
+            <Image src={iosQrUrl} alt="QR-kod för App Store" width={200} height={200} className={styles.qrImage} unoptimized />
             <a href={IOS_APP_URL} target="_blank" rel="noreferrer" className={styles.link}>
               Öppna App Store
             </a>
           </div>
           <div className={styles.qrCard}>
             <h3 className={styles.qrTitle}>Android (Google Play)</h3>
-            <img src={androidQrUrl} alt="QR-kod för Google Play" className={styles.qrImage} />
+            <Image src={androidQrUrl} alt="QR-kod för Google Play" width={200} height={200} className={styles.qrImage} unoptimized />
             <a href={ANDROID_APP_URL} target="_blank" rel="noreferrer" className={styles.link}>
               Öppna Google Play
             </a>

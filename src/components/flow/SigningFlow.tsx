@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useEffectEvent } from 'react';
 import { Button } from '@/components/ui/Button';
-import { useFlowState } from '@/hooks/useFlowState';
+import { useFlowState } from '@/context/FlowStateContext';
 import { formatAddress, formatInvoiceAddress } from '@/services/addressService';
+import { areAddressesEqual } from '@/flow/privateFlow';
+import { formatSwedishDate } from '@/utils/formatters';
 import {
   calculateComparePriceOrePerKwh,
   getActiveCompareConsumptionKwh,
@@ -17,6 +19,8 @@ interface SigningFlowProps {
   onCancel: () => void;
 }
 
+const formatMonths = (months: number) => `${months} ${months === 1 ? 'månad' : 'månader'}`;
+
 export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
   const { state: rawState } = useFlowState();
   const [status, setStatus] = useState<'INIT' | 'PENDING' | 'SUCCESS'>('INIT');
@@ -25,31 +29,18 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
     setStatus('PENDING');
   };
 
+  const finish = useEffectEvent(onSigned);
   useEffect(() => {
-    if (status === 'PENDING') {
-      const timer = setTimeout(() => {
-        setStatus('SUCCESS');
-        setTimeout(onSigned, 1000); // Wait a second before redirecting
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [status, onSigned]);
+    if (status === 'INIT') return;
+    const timer = setTimeout(() => {
+      if (status === 'PENDING') setStatus('SUCCESS');
+      else finish();
+    }, status === 'PENDING' ? 3000 : 1000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   if (rawState.customerType !== 'PRIVATE') return null;
   const state = rawState;
-  const isSameAddress = (
-    a: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined,
-    b: { street: string; number: string; postalCode: string; city: string; apartmentNumber?: string } | null | undefined
-  ) => {
-    if (!a || !b) return false;
-    return (
-      a.street === b.street &&
-      a.number === b.number &&
-      a.postalCode === b.postalCode &&
-      a.city === b.city &&
-      (a.apartmentNumber || '') === (b.apartmentNumber || '')
-    );
-  };
   const moveChoiceLabel =
     state.moveChoice === 'MOVE_EXISTING'
       ? 'Flytta med befintligt avtal'
@@ -82,7 +73,7 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
       : '-';
   const showInvoiceAddress =
     !!state.invoice?.address &&
-    !isSameAddress(state.invoice.address, state.valdAdress || undefined);
+    !areAddressesEqual(state.invoice.address, state.valdAdress, { includeApartmentNumber: true });
   const signingDescription =
     state.moveChoice === 'MOVE_EXISTING'
       ? 'När du signerar flyttas ditt avtal till adressen ovan.'
@@ -100,24 +91,13 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
     selectedProduct?.surchargeOrePerKwh !== undefined &&
     selectedProduct?.fixedFeeSekPerMonth !== undefined &&
     selectedProduct?.otherFeeSekPerMonth !== undefined;
-  const contractTerms = (() => {
-    if (selectedProduct?.type === 'FAST') {
-      return {
-        binding: '12 månader',
-        termination: '1 månad',
-      };
-    }
-    if (state.customer.contractEndDate) {
-      return {
-        binding: `Till ${state.customer.contractEndDate}`,
-        termination: '1 månad',
-      };
-    }
-    return {
-      binding: 'Ingen bindningstid',
-      termination: '1 månad',
-    };
-  })();
+  const contractTerms = selectedProduct?.contractTerms;
+  const bindingLabel = contractTerms?.bindingMonths
+    ? formatMonths(contractTerms.bindingMonths)
+    : 'Ingen bindningstid';
+  const terminationLabel = contractTerms
+    ? formatMonths(contractTerms.noticeMonths)
+    : '-';
   const compareRows = STANDARD_COMPARE_KWH_LEVELS.reduce<Array<{ kwh: number; price: number }>>(
     (rows, kwh) => {
       const price = calculateComparePriceOrePerKwh(selectedProduct, kwh);
@@ -169,15 +149,21 @@ export const SigningFlow = ({ onSigned, onCancel }: SigningFlowProps) => {
                  </div>
                  <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Startdatum:</span>
-                   <span className={styles.summaryValue}>{state.startDate || '-'}</span>
+                   <span className={styles.summaryValue}>{state.startDate ? formatSwedishDate(state.startDate) : '-'}</span>
                  </div>
+                 {state.scenario === 'BYTE' && state.customer.contractEndDate && (
+                   <div className={styles.summaryItem}>
+                     <span className={styles.summaryLabel}>Nuvarande avtal bundet till:</span>
+                     <span className={styles.summaryValue}>{formatSwedishDate(state.customer.contractEndDate)}</span>
+                   </div>
+                 )}
                  <div className={styles.summaryItem}>
-                   <span className={styles.summaryLabel}>Bindningstid:</span>
-                   <span className={styles.summaryValue}>{contractTerms.binding}</span>
+                   <span className={styles.summaryLabel}>Nya avtalets bindningstid:</span>
+                   <span className={styles.summaryValue}>{bindingLabel}</span>
                  </div>
                  <div className={styles.summaryItem}>
                    <span className={styles.summaryLabel}>Uppsägningstid:</span>
-                   <span className={styles.summaryValue}>{contractTerms.termination}</span>
+                   <span className={styles.summaryValue}>{terminationLabel}</span>
                  </div>
                  {showInvoiceAddress && (
                    <div className={styles.summaryItem}>

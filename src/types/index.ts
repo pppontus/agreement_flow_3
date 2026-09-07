@@ -1,4 +1,8 @@
 export type EntryPoint = 'ADDRESS_FIRST' | 'PRODUCT_FIRST';
+export type EntryOffer = {
+  source: 'PRODUCT_PAGE' | 'PARTNER';
+  productId: string;
+};
 export type Scenario = 'UNKNOWN' | 'NY' | 'BYTE' | 'FLYTT' | 'EXTRA';
 export type IdMethod = 'BANKID_MOBILE' | 'BANKID_QR' | 'MANUAL_PNR';
 export type MoveChoice = 'MOVE_EXISTING' | 'NEW_ON_NEW_ADDRESS';
@@ -7,6 +11,34 @@ export type HousingType =
   | 'KWH_5000'
   | 'KWH_20000';
 export type CompareProfileKwh = number;
+export type PrivateFlowStep =
+  | 'PRODUCT_SELECT'
+  | 'PRODUCT_CLARIFY'
+  | 'ADDRESS_SEARCH'
+  | 'IDENTIFY'
+  | 'FLOW_STOP'
+  | 'EXISTING_CONTRACT_EXTRAS'
+  | 'MOVE_OFFER'
+  | 'DETAILS'
+  | 'TERMS'
+  | 'SIGNING'
+  | 'CONFIRMATION'
+  | 'EXTRA_BIXIA_NARA'
+  | 'EXTRA_REALTIME_METER'
+  | 'APP_DOWNLOAD'
+  | 'EXTRA_CONTACT';
+export type PrivateDetailsStep = 'DATE' | 'CONTACT';
+export type DateSelection = { date: string; mode: 'EARLIEST' | 'SPECIFIC' };
+export type ContactDraft = {
+  email: string;
+  phone: string;
+  useRecommendedInvoice: boolean;
+  invoiceQuery: string;
+  selectedCustomInvoiceAddress: Address | null;
+  invoiceApartmentNumber: string;
+  invoiceCoValue: string;
+  isConfirming: boolean;
+};
 export type FacilityHandling = {
   mode: 'FETCH_WITH_POWER_OF_ATTORNEY' | 'MANUAL' | 'FROM_CRM';
   facilityId: string | null;
@@ -16,6 +48,16 @@ export type ContactInterestServiceId =
   | 'CHARGER'
   | 'SOLAR'
   | 'ATTIC_INSULATION';
+export type ExtraServicesSelection = {
+  bixiaNara: {
+    selected: boolean;
+    county?: string;
+  };
+  realtimeMeter: {
+    selected: boolean;
+  };
+  contactMeServices: ContactInterestServiceId[];
+};
 export type Invoice = {
   mode: 'SAME_AS_RECOMMENDED' | 'CUSTOM';
   address: Address | null;
@@ -31,39 +73,28 @@ export type ScenarioCustomer = {
   phone: string | null;
   folkbokforing: Address | null;
   facilityId: string | null;
-  extraServices?: {
-    bixiaNara: {
-      selected: boolean;
-      county?: string;
-    };
-    realtimeMeter: {
-      selected: boolean;
-    };
-    contactMeServices?: ContactInterestServiceId[];
-  } | null;
+  extraServices?: ExtraServicesSelection | null;
   contractEndDate?: string | null;
   marketingConsent: { email: boolean; sms: boolean };
 };
 
-export type Address = {
-  street: string;
-  number: string;
-  postalCode: string;
-  city: string;
-  type?: 'LGH' | 'VILLA' | 'UNKNOWN';
-  elomrade?: 'SE1' | 'SE2' | 'SE3' | 'SE4';
-  apartmentNumber?: string;
-};
+export type { Address, Elomrade, Product } from './shared';
 
-export type Elomrade = 'SE1' | 'SE2' | 'SE3' | 'SE4';
-
-import { CompanyState } from './company';
+import type { Address, Elomrade, Product } from './shared';
+import type { CompanyState } from './company';
 
 export type PrivateCaseState = {
   customerType: 'PRIVATE';
   // Meta
   caseId: string | null;
   entryPoint: EntryPoint;
+  entryOffer: EntryOffer | null;
+  currentStep: PrivateFlowStep;
+  detailsStep: PrivateDetailsStep;
+  dateDraft: DateSelection | null;
+  contactDraft: ContactDraft | null;
+  signedAt: string | null;
+  extraServicesSelection: ExtraServicesSelection | null;
   scenario: Scenario;
   elomrade: Elomrade | null;
 
@@ -85,26 +116,7 @@ export type PrivateCaseState = {
   idMethod: IdMethod | null;
   personnummer: string | null;
   isAuthenticated: boolean;
-  customer: {
-    isExistingCustomer: boolean;
-    name: string | null;
-    email: string | null;
-    phone: string | null;
-    folkbokforing: Address | null;
-    facilityId?: string | null;
-    extraServices?: {
-      bixiaNara: {
-        selected: boolean;
-        county?: string;
-      };
-      realtimeMeter: {
-        selected: boolean;
-      };
-      contactMeServices?: ContactInterestServiceId[];
-    } | null;
-    contractEndDate?: string | null; // ISO Date YYYY-MM-DD
-    marketingConsent: { email: boolean; sms: boolean };
-  };
+  customer: ScenarioCustomer;
 
   // Product & Price
   selectedProduct: Product | null;
@@ -112,7 +124,7 @@ export type PrivateCaseState = {
 
   // Dates
   startDate: string | null;
-  startDateMode: 'EARLIEST' | 'CHOOSE_DATE';
+  startDateMode: DateSelection['mode'];
 
   // Legal & Consents
   marketingConsent: { email: boolean; sms: boolean };
@@ -124,21 +136,6 @@ export type PrivateCaseState = {
 };
 
 export type CaseState = PrivateCaseState | CompanyState;
-
-export type Product = {
-  id: string;
-  name: string;
-  type: 'FAST' | 'RORLIGT' | 'KVARTS' | 'FORVALTAT';
-  description: string;
-  energyPriceOrePerKwh?: number;
-  surchargeOrePerKwh?: number;
-  fixedFeeSekPerMonth?: number;
-  otherFeeSekPerMonth?: number;
-  pricePerKwh?: number;
-  isDiscounted?: boolean;
-  discountText?: string;
-  isCompanyOnly?: boolean;
-};
 
 export type StopReason = 
   | 'DUPLICATE_SAME_CONTRACT'

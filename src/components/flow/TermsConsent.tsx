@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FacilityHandling, Product } from '@/types';
+import { requiresRiskConsent, isValidFacilityHandling } from '@/flow/validation';
 import styles from './TermsConsent.module.css';
 
 interface TermsConsentProps {
@@ -17,6 +18,7 @@ interface TermsConsentProps {
   requiresFacilityId?: boolean; // If true, show facility ID section (e.g. for moves)
   productType?: Product['type'];
   initialRiskAccepted?: boolean;
+  initialTermsAccepted?: boolean;
   existingMarketingConsent?: { email: boolean; sms: boolean };
   initialMarketingConsent?: { email: boolean; sms: boolean };
   initialFacilityHandling?: FacilityHandling | null;
@@ -28,11 +30,12 @@ export const TermsConsent = ({
   requiresFacilityId = false,
   productType,
   initialRiskAccepted = false,
+  initialTermsAccepted = false,
   existingMarketingConsent = { email: false, sms: false },
   initialMarketingConsent = { email: false, sms: false },
   initialFacilityHandling = null,
 }: TermsConsentProps) => {
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(initialTermsAccepted);
   const [riskAccepted, setRiskAccepted] = useState(initialRiskAccepted);
   const [marketingEmail, setMarketingEmail] = useState(initialMarketingConsent.email);
   const [marketingSms, setMarketingSms] = useState(initialMarketingConsent.sms);
@@ -46,11 +49,11 @@ export const TermsConsent = ({
   const hasExistingEmailConsent = existingMarketingConsent.email;
   const hasExistingSmsConsent = existingMarketingConsent.sms;
   const showMarketingOptions = !hasExistingEmailConsent || !hasExistingSmsConsent;
-  const requiresRiskInfo = productType === 'FAST' || productType === 'KVARTS';
+  const requiresRiskInfo = requiresRiskConsent(productType);
   const canContinue = termsAccepted && (!requiresRiskInfo || riskAccepted);
 
   const handleContinue = () => {
-    if (requiresFacilityId && !fetchFacilityId && !manualFacilityId) {
+    if (requiresFacilityId && !isValidFacilityHandling({ mode: fetchFacilityId ? 'FETCH_WITH_POWER_OF_ATTORNEY' : 'MANUAL', facilityId: manualFacilityId })) {
       setFacilityIdError('Ange anläggnings-ID eller ge fullmakt');
       return;
     }

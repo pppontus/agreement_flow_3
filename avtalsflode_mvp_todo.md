@@ -1,6 +1,8 @@
 # To-do: korrigera privat avtalsflöde för klickbar MVP
 
-Senast uppdaterad: 2026-02-20
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
+Senast uppdaterad: 2026-08-27
 Underlag: `Avtalsflöde (1).pdf` + nuvarande implementation i kodbasen.
 Primärt mål: ett mycket bra testflöde för intern "klicka igenom"-validering av kundupplevelse i olika scenarion.
 
@@ -20,6 +22,14 @@ Flödet är klart när:
 - Flödet kan simuleras som ny kund, befintlig kund, flytt, byte med bindning, byte utan bindning.
 - Data som samlas in i viktiga steg syns i sammanfattning/signering/efterföljande steg.
 - Eventuella "stoppfall" har en tydlig och rimlig UX (inte tyst misslyckande).
+
+Aktuell ingångslogik:
+
+- Generell ingång: `ADDRESS_SEARCH -> PRODUCT_SELECT -> IDENTIFY`.
+- Produktsida: förvalt standardavtal + explicit elområdesval -> `ADDRESS_SEARCH -> IDENTIFY`.
+- Partneringång: förvalt rabattavtal + explicit elområdesval -> `ADDRESS_SEARCH -> IDENTIFY`.
+- Om adressens elområde skiljer sig från det tidigare valet måste kunden godkänna det regionala priset före identifiering.
+- Rabattavtal visas inte som ett kundval i den generella resan, utan endast via partneringången.
 
 ## 3) Prioriterad ändringslista (ordning att bygga i)
 
@@ -311,11 +321,19 @@ Status 2026-02-20:
 
 ---
 
-### [ ] P2.3 Lägg enkel "scenario playback"-checklista i DevPanel
+### [X] P2.3 Lägg enkel "scenario playback"-checklista i DevPanel
 
 Mål:
 
 - Testledare kan se aktivt scenario + viktiga val i en enkel ruta under demo.
+
+Status 2026-08-27:
+
+- DevPanel har presets för generell ingång, produktsida och partneringång.
+- Standard- respektive partneravtal kan väljas innan demon startas.
+- "Starta om med valda inställningar" rensar kundresans state men behåller valda mockinställningar.
+- Playback visar ingång, erbjudande, elområde, CRM-scenario, avtalsspår, anläggnings-ID, fakturaadress och återstående extratjänster.
+- Mockat scenario, adressresultat, marknadssamtycke och befintliga extratjänster gäller även när DevPanel är stängd.
 
 ## 4) Rekommenderad implementation i etapper
 
@@ -336,12 +354,13 @@ Etapp C (Polish):
 
 - [X] P2.1
 - [X] P2.2
-- P2.3
+- [X] P2.3
 
 ## 5) Data- och state-kontrakt att införa (MVP)
 
 Utöka `PrivateCaseState` med:
 
+- `entryOffer: { source: 'PRODUCT_PAGE' | 'PARTNER'; productId: string } | null`
 - `moveChoice: 'MOVE_EXISTING' | 'NEW_ON_NEW_ADDRESS' | null`
 - `facilityHandling: { mode: 'FETCH_WITH_POWER_OF_ATTORNEY' | 'MANUAL' | 'FROM_CRM'; facilityId: string | null } | null`
 - `invoice: { mode: 'SAME_AS_RECOMMENDED' | 'OTHER_KNOWN'; address: Address | null } | null`
@@ -356,7 +375,7 @@ Minimikrav setters i `FlowStateContext`:
 
 ## Scenario 1: Ny kund, villa, rörligt, snabbaste väg
 
-- Välj produkt -> adress villa -> identifiering -> startdatum -> kontakt/faktura -> villkor -> signering -> klart.
+- Välj adress -> välj rörligt avtal -> identifiering -> startdatum -> kontakt/faktura -> villkor -> signering -> klart.
 - Förväntat: ingen riskruta för rörligt (enligt nuvarande design), inga blockerande fel.
 
 ## Scenario 2: Lägenhet, manuellt lägenhetsnummer + c/o
@@ -427,12 +446,30 @@ När arbetet lämnas över ska följande finnas:
 - Ifylld testmatris (12 scenarion ovan) med resultat pass/fail.
 - Lista på ev. kvarvarande avvikelser med motivering (varför acceptabla i MVP).
 
-## 9) Nästa rekommenderade steg (nu)
+## 9) Verifieringsresultat 2026-08-27
 
-Nästa steg: **P2.3 Lägg enkel "scenario playback"-checklista i DevPanel**.
+| Kontroll | Resultat | Verifierat utfall |
+|---|---|---|
+| Generell ingång med SE4-adress | PASS | Adress visas först, därefter standardavtal med SE4-jämförpris och sedan identifiering. |
+| Produktsideingång | PASS | Ett standardavtal är förvalt och explicit elområdesval krävs innan pris och fortsättning visas. |
+| Partneringång SE3 -> SE4 | PASS | Samma rabattprodukt behålls och kunden får godkänna prisändringen från 93,50 till 103,00 öre/kWh. |
+| Otillgängligt partner-fastpris i SE1 | PASS | Endast rabatterade rörligt- och kvartsprisalternativ visas. |
+| Mockscenario med stängd DevPanel | PASS | `BYTE` användes efter BankID trots att panelen var stängd. |
+| Alla explicita CRM-presets med stängd DevPanel | PASS | `NY_KUND`, `FLYTT`, `BYTE`, `BYTE_NO_BINDING`, `BEFINTLIG_ADRESS_SAMMA_AVTAL` och `STOPP_KAN_INTE_LEVERERA` landade på avsett nästa steg. |
+| Deterministiskt autoläge | PASS | Två körningar med identisk person/adress gav samma scenario och nästa steg. |
+| Bindningstid i signeringssammanfattning | PASS | Nuvarande avtalets slutdatum visas separat och det nya produktavtalets villkor hämtas från produktdata. |
+| Samma avtal och alla extratjänster finns | PASS | Inga tomma erbjudandesteg visas och kunden fortsätter till appen. |
+| Samma avtal och endast kontakttjänster saknas | PASS | Appen visas före kontaktsteget; endast saknade tjänster visas. |
+| Kontaktintresse utan val | PASS | "Be om kontakt" är inaktiverad tills minst en tjänst valts. |
+| Typkontroll, riktad ESLint, build och diffkontroll | PASS | `npx tsc --noEmit`, riktad ESLint, `npm run build` och `git diff --check` passerar. |
+| Full ESLint | KÄND BASELINE | Sju fel kvarstår oförändrat i företagsflödet och `src/services/apiClient.ts`; inga fel finns i ändrade privatflödesfiler. |
+
+## 10) Nästa rekommenderade steg (nu)
+
+Nästa steg: **gemensam intern playback av hela testmatrisen inför överlämning till design och IT**.
 
 Viktigt att få med:
 
-- Visa aktivt scenario, avtalsspår och nyckelval i en kompakt checklista i DevPanel.
-- Gör checklistan lätt att använda live under demo/testledning.
-- Säkerställ att checklistan uppdateras direkt när användaren gör nya val i flödet.
+- Bekräfta båda flyttvalen, manuellt anläggnings-ID/fullmakt och alternativ fakturaadress i samma genomgång.
+- Samla beslut om ordning och copy, inte visuell detaljpolish eller riktig integrationsfunktion.
+- Dokumentera eventuella affärsregler som design och IT behöver få explicit i beställningen.

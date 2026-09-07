@@ -1,78 +1,61 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { CaseState, PrivateCaseState, Product, Address, IdMethod, Scenario, Elomrade, MoveChoice, FacilityHandling, Invoice, ScenarioCustomer, HousingType, CompareProfileKwh } from '@/types';
-import { CompanyState, CompanyLookupData, Facility } from '@/types/company';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+  type ReactNode,
+} from 'react';
+import type {
+  Address,
+  ContactDraft,
+  DateSelection,
+  CaseState,
+  CompareProfileKwh,
+  Elomrade,
+  EntryOffer,
+  EntryPoint,
+  ExtraServicesSelection,
+  FacilityHandling,
+  HousingType,
+  IdMethod,
+  Invoice,
+  MoveChoice,
+  PrivateDetailsStep,
+  PrivateFlowStep,
+  Product,
+  Scenario,
+  ScenarioCustomer,
+  StopReason,
+} from '@/types';
+import type { CompanyLookupData, Facility } from '@/types/company';
+import { createInitialPrivateState, flowStateReducer } from '@/state/flowState';
+import {
+  FLOW_STATE_STORAGE_KEY,
+  LEGACY_FLOW_STATE_STORAGE_KEYS,
+  parsePersistedCaseState,
+  serializeCaseState,
+} from '@/state/persistence';
 
-const INITIAL_PRIVATE_STATE: PrivateCaseState = {
-  customerType: 'PRIVATE',
-  caseId: null,
-  entryPoint: 'PRODUCT_FIRST',
-  scenario: 'UNKNOWN',
-  elomrade: null,
-  valdAdress: null,
-  moveChoice: null,
-  housingType: 'KWH_5000',
-  compareProfileKwh: 5000,
-  customConsumptionKwh: null,
-  facilityHandling: null,
-  invoice: null,
-  addressDetails: {
-    boendeform: null,
-    apartmentNumber: null,
-    co: null,
-  },
-  idMethod: null,
-  personnummer: null,
-  isAuthenticated: false,
-  customer: {
-    isExistingCustomer: false,
-    name: null,
-    email: null,
-    phone: null,
-    folkbokforing: null,
-    marketingConsent: { email: false, sms: false },
-  },
-  selectedProduct: null,
-  isPriceConflict: false,
-  startDate: null,
-  startDateMode: 'EARLIEST',
-  marketingConsent: { email: false, sms: false },
-  riskInfoAccepted: false,
-  termsAccepted: false,
-  stop: { isStopped: false, reason: null },
+type StartPrivateFlowOptions = {
+  entryPoint: EntryPoint;
+  entryOffer: EntryOffer | null;
 };
-
-const INITIAL_COMPANY_STATE: CompanyState = {
-  customerType: 'COMPANY',
-  totalConsumption: 0,
-  facilityCount: 0,
-  orgNr: null,
-  companyName: null,
-  isCreditApproved: false,
-  signatoryType: 'UNKNOWN',
-  primarySigner: null,
-  secondarySigner: null,
-  facilities: [],
-  selectedProduct: null,
-  startDate: null,
-  invoiceAddress: 'SAME_AS_VISITING',
-  invoiceReference: null,
-  termsAccepted: false,
-  authorityDeclared: false,
-};
-
-const INITIAL_STATE: CaseState = INITIAL_PRIVATE_STATE;
-
-const STORAGE_KEY = 'bixia_flow_state_v6'; // Bump version since structure changed
 
 interface FlowStateContextType {
   state: CaseState;
   isInitialized: boolean;
+  storageUnavailable: boolean;
   setCustomerType: (type: 'PRIVATE' | 'COMPANY') => void;
-  // Private Flow Setters
+  startPrivateFlow: (options: StartPrivateFlowOptions) => void;
   selectProduct: (product: Product) => void;
-  setAddress: (address: Address, apartmentDetails?: { number: string | null; co: string | null }) => void;
+  setAddress: (
+    address: Address,
+    apartmentDetails?: { number: string | null; co: string | null },
+  ) => void;
   setAuthenticated: (pnr: string, method: IdMethod) => void;
   setCustomerScenario: (scenario: Scenario, customer: ScenarioCustomer) => void;
   setMoveChoice: (choice: MoveChoice) => void;
@@ -83,14 +66,37 @@ interface FlowStateContextType {
   }) => void;
   setFacilityHandling: (handling: FacilityHandling | null) => void;
   setInvoice: (invoice: Invoice | null) => void;
-  setCustomerDetails: (details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => void;
+  setCustomerDetails: (details: {
+    email: string;
+    phone: string;
+    startDate: string;
+    startDateMode: 'EARLIEST' | 'SPECIFIC';
+  }) => void;
   setElomrade: (elomrade: Elomrade) => void;
   resolvePriceConflict: () => void;
-  setConsents: (consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => void;
+  setConsents: (consents: {
+    terms?: boolean;
+    risk?: boolean;
+    marketing?: { email: boolean; sms: boolean };
+  }) => void;
+  navigatePrivate: (
+    step: PrivateFlowStep,
+    detailsStep?: PrivateDetailsStep,
+  ) => void;
+  setPrivateDetailsStep: (step: PrivateDetailsStep) => void;
+  setDateDraft: (value: DateSelection) => void;
+  confirmDate: (value: DateSelection) => void;
+  setContactDraft: (value: ContactDraft) => void;
+  completeSigning: () => void;
+  setPrivateStop: (reason: StopReason | null) => void;
+  setExtraServicesSelection: (selection: ExtraServicesSelection | null) => void;
   resetState: () => void;
-  // Company Flow Setters
+  clearPersistedState: () => void;
   setCompanyProduct: (product: Product) => void;
-  setCompanyGatekeeper: (data: { totalConsumption: number; facilityCount: number }) => void;
+  setCompanyGatekeeper: (data: {
+    totalConsumption: number;
+    facilityCount: number;
+  }) => void;
   setCompanyLookupData: (data: CompanyLookupData) => void;
   setCompanyFacilities: (facilities: Facility[]) => void;
 }
@@ -106,264 +112,254 @@ export const useFlowState = () => {
 };
 
 export const FlowStateProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState<CaseState>(INITIAL_STATE);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [state, dispatch] = useReducer(flowStateReducer, undefined, () =>
+    createInitialPrivateState({ createCaseId: false }),
+  );
+  const [storageUnavailable, markStorageUnavailable] = useReducer(
+    () => true,
+    false,
+  );
+  const [isInitialized, markInitialized] = useReducer(() => true, false);
 
-  // Load persisted state only after mount to avoid hydration mismatch.
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setState(JSON.parse(stored) as CaseState);
+      for (const key of [
+        FLOW_STATE_STORAGE_KEY,
+        ...LEGACY_FLOW_STATE_STORAGE_KEYS,
+      ]) {
+        const stored = sessionStorage.getItem(key);
+        const restored = stored ? parsePersistedCaseState(stored) : null;
+        if (restored) {
+          dispatch({ type: 'HYDRATE', state: restored });
+          break;
+        }
       }
-    } catch (e) {
-      console.error('Failed to load flow state', e);
-    } finally {
-      setIsInitialized(true);
+    } catch {
+      markStorageUnavailable();
     }
+    markInitialized();
   }, []);
 
-  // Save to storage on change
-  useEffect(() => {
-    if (!isInitialized) return;
+  useLayoutEffect(() => {
+    if (!isInitialized || storageUnavailable) return;
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to save flow state', e);
+      sessionStorage.setItem(FLOW_STATE_STORAGE_KEY, serializeCaseState(state));
+      LEGACY_FLOW_STATE_STORAGE_KEYS.forEach((key) =>
+        sessionStorage.removeItem(key),
+      );
+    } catch {
+      markStorageUnavailable();
     }
-  }, [state, isInitialized]);
+  }, [state, isInitialized, storageUnavailable]);
 
-  const setCustomerType = useCallback((type: 'PRIVATE' | 'COMPANY') => {
-    if (type === 'PRIVATE') {
-      setState(INITIAL_PRIVATE_STATE);
-    } else {
-      setState(INITIAL_COMPANY_STATE);
-    }
+  const setCustomerType = useCallback((customerType: 'PRIVATE' | 'COMPANY') => {
+    dispatch({ type: 'SET_CUSTOMER_TYPE', customerType });
+  }, []);
+
+  const startPrivateFlow = useCallback((options: StartPrivateFlowOptions) => {
+    dispatch({ type: 'START_PRIVATE_FLOW', ...options });
   }, []);
 
   const selectProduct = useCallback((product: Product) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return { ...prev, selectedProduct: product };
-    });
+    dispatch({ type: 'SELECT_PRIVATE_PRODUCT', product });
   }, []);
 
-  const setAddress = useCallback((address: Address, apartmentDetails?: { number: string | null, co: string | null }) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      
-      let isConflict = false;
-      if (address.elomrade && prev.elomrade && address.elomrade !== prev.elomrade) {
-        isConflict = true;
-      }
-      
-      return {
-        ...prev,
-        valdAdress: address,
-        invoice: null,
-        elomrade: address.elomrade || prev.elomrade,
-        isPriceConflict: isConflict,
-        addressDetails: {
-          boendeform: address.type === 'LGH' ? 'lägenhet' : 'villa',
-          apartmentNumber: apartmentDetails?.number || null,
-          co: apartmentDetails?.co || null,
-        }
-      };
-    });
-  }, []);
+  const setAddress = useCallback(
+    (
+      address: Address,
+      apartmentDetails?: { number: string | null; co: string | null },
+    ) => {
+      dispatch({ type: 'SET_PRIVATE_ADDRESS', address, apartmentDetails });
+    },
+    [],
+  );
 
-  const setAuthenticated = useCallback((pnr: string, method: IdMethod) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        personnummer: pnr,
-        idMethod: method,
-        isAuthenticated: true
-      };
-    });
-  }, []);
+  const setAuthenticated = useCallback(
+    (personnummer: string, method: IdMethod) => {
+      dispatch({ type: 'SET_PRIVATE_AUTHENTICATED', personnummer, method });
+    },
+    [],
+  );
 
-  const setCustomerScenario = useCallback((scenario: Scenario, customer: ScenarioCustomer) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        scenario,
-        moveChoice: null,
-        facilityHandling: null,
-        invoice: null,
-        marketingConsent: customer.marketingConsent || { email: false, sms: false },
-        customer: {
-          ...customer,
-          folkbokforing: customer.folkbokforing || null, 
-          marketingConsent: customer.marketingConsent || { email: false, sms: false },
-        }
-      };
-    });
-  }, []);
+  const setCustomerScenario = useCallback(
+    (scenario: Scenario, customer: ScenarioCustomer) => {
+      dispatch({ type: 'SET_PRIVATE_SCENARIO', scenario, customer });
+    },
+    [],
+  );
 
   const setMoveChoice = useCallback((choice: MoveChoice) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        moveChoice: choice,
-        invoice: null,
-      };
-    });
+    dispatch({ type: 'SET_PRIVATE_MOVE_CHOICE', choice });
   }, []);
 
-  const setCompareProfile = useCallback((profile: {
-    housingType?: HousingType | null;
-    compareProfileKwh?: CompareProfileKwh | null;
-    customConsumptionKwh?: number | null;
-  }) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        housingType: profile.housingType !== undefined ? profile.housingType : prev.housingType,
-        compareProfileKwh: profile.compareProfileKwh !== undefined ? profile.compareProfileKwh : prev.compareProfileKwh,
-        customConsumptionKwh: profile.customConsumptionKwh !== undefined ? profile.customConsumptionKwh : prev.customConsumptionKwh,
-      };
-    });
-  }, []);
+  const setCompareProfile = useCallback(
+    (profile: {
+      housingType?: HousingType | null;
+      compareProfileKwh?: CompareProfileKwh | null;
+      customConsumptionKwh?: number | null;
+    }) => {
+      dispatch({ type: 'SET_PRIVATE_COMPARE_PROFILE', profile });
+    },
+    [],
+  );
 
-  const setFacilityHandling = useCallback((handling: FacilityHandling | null) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        facilityHandling: handling,
-      };
-    });
-  }, []);
+  const setFacilityHandling = useCallback(
+    (handling: FacilityHandling | null) => {
+      dispatch({ type: 'SET_PRIVATE_FACILITY_HANDLING', handling });
+    },
+    [],
+  );
 
   const setInvoice = useCallback((invoice: Invoice | null) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        invoice,
-      };
-    });
+    dispatch({ type: 'SET_PRIVATE_INVOICE', invoice });
   }, []);
 
-  const setCustomerDetails = useCallback((details: { email: string; phone: string; startDate: string; startDateMode: 'EARLIEST' | 'SPECIFIC' }) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        startDate: details.startDate,
-        startDateMode: details.startDateMode === 'SPECIFIC' ? 'CHOOSE_DATE' : 'EARLIEST',
-        customer: {
-          ...prev.customer,
-          email: details.email,
-          phone: details.phone
-        }
-      };
-    });
-  }, []);
-
-  const resetState = useCallback(() => {
-    setState(prev => prev.customerType === 'PRIVATE' ? INITIAL_PRIVATE_STATE : INITIAL_COMPANY_STATE);
-  }, []);
+  const setCustomerDetails = useCallback(
+    (details: {
+      email: string;
+      phone: string;
+      startDate: string;
+      startDateMode: 'EARLIEST' | 'SPECIFIC';
+    }) => {
+      dispatch({ type: 'SET_PRIVATE_CUSTOMER_DETAILS', details });
+    },
+    [],
+  );
 
   const setElomrade = useCallback((elomrade: Elomrade) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return { ...prev, elomrade };
-    });
+    dispatch({ type: 'SET_PRIVATE_ELOMRADE', elomrade });
   }, []);
 
   const resolvePriceConflict = useCallback(() => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return { ...prev, isPriceConflict: false };
-    });
+    dispatch({ type: 'RESOLVE_PRIVATE_PRICE_CONFLICT' });
   }, []);
 
-  const setConsents = useCallback((consents: { terms?: boolean; risk?: boolean; marketing?: { email: boolean; sms: boolean } }) => {
-    setState(prev => {
-      if (prev.customerType !== 'PRIVATE') return prev;
-      return {
-        ...prev,
-        termsAccepted: consents.terms ?? prev.termsAccepted,
-        riskInfoAccepted: consents.risk ?? prev.riskInfoAccepted, 
-        marketingConsent: consents.marketing ? { ...consents.marketing } : prev.marketingConsent
-      };
-    });
+  const setConsents = useCallback(
+    (consents: {
+      terms?: boolean;
+      risk?: boolean;
+      marketing?: { email: boolean; sms: boolean };
+    }) => {
+      dispatch({ type: 'SET_PRIVATE_CONSENTS', consents });
+    },
+    [],
+  );
+
+  const navigatePrivate = useCallback(
+    (step: PrivateFlowStep, detailsStep?: PrivateDetailsStep) => {
+      dispatch({ type: 'NAVIGATE_PRIVATE', step, detailsStep });
+    },
+    [],
+  );
+
+  const setPrivateDetailsStep = useCallback((step: PrivateDetailsStep) => {
+    dispatch({ type: 'SET_PRIVATE_DETAILS_STEP', step });
+  }, []);
+
+  const setDateDraft = useCallback(
+    (value: DateSelection) =>
+      dispatch({ type: 'SET_PRIVATE_DATE_DRAFT', value }),
+    [],
+  );
+  const confirmDate = useCallback(
+    (value: DateSelection) => dispatch({ type: 'CONFIRM_PRIVATE_DATE', value }),
+    [],
+  );
+  const setContactDraft = useCallback(
+    (value: ContactDraft) =>
+      dispatch({ type: 'SET_PRIVATE_CONTACT_DRAFT', value }),
+    [],
+  );
+  const completeSigning = useCallback(
+    () =>
+      dispatch({
+        type: 'COMPLETE_PRIVATE_SIGNING',
+        signedAt: new Date().toISOString(),
+      }),
+    [],
+  );
+
+  const setPrivateStop = useCallback((reason: StopReason | null) => {
+    dispatch({ type: 'SET_PRIVATE_STOP', reason });
+  }, []);
+
+  const setExtraServicesSelection = useCallback(
+    (selection: ExtraServicesSelection | null) => {
+      dispatch({ type: 'SET_PRIVATE_EXTRA_SERVICES', selection });
+    },
+    [],
+  );
+
+  const resetState = useCallback(() => {
+    dispatch({ type: 'RESET_FLOW' });
+  }, []);
+
+  const clearPersistedState = useCallback(() => {
+    try {
+      sessionStorage.removeItem(FLOW_STATE_STORAGE_KEY);
+      LEGACY_FLOW_STATE_STORAGE_KEYS.forEach((key) =>
+        sessionStorage.removeItem(key),
+      );
+    } catch {
+      markStorageUnavailable();
+    }
   }, []);
 
   const setCompanyProduct = useCallback((product: Product) => {
-    setState(prev => {
-      if (prev.customerType !== 'COMPANY') return prev;
-      return {
-        ...prev,
-        selectedProduct: product,
-      };
-    });
+    dispatch({ type: 'SET_COMPANY_PRODUCT', product });
   }, []);
 
-  const setCompanyGatekeeper = useCallback((data: { totalConsumption: number; facilityCount: number }) => {
-    setState(prev => {
-      if (prev.customerType !== 'COMPANY') return prev;
-      return {
-        ...prev,
-        totalConsumption: data.totalConsumption,
-        facilityCount: data.facilityCount,
-      };
-    });
-  }, []);
+  const setCompanyGatekeeper = useCallback(
+    (data: { totalConsumption: number; facilityCount: number }) => {
+      dispatch({ type: 'SET_COMPANY_GATEKEEPER', data });
+    },
+    [],
+  );
 
   const setCompanyLookupData = useCallback((data: CompanyLookupData) => {
-    setState(prev => {
-      if (prev.customerType !== 'COMPANY') return prev;
-      return {
-        ...prev,
-        orgNr: data.orgNr,
-        companyName: data.companyName,
-        isCreditApproved: data.isCreditApproved,
-        signatoryType: data.signatoryType,
-      };
-    });
+    dispatch({ type: 'SET_COMPANY_LOOKUP_DATA', data });
   }, []);
 
   const setCompanyFacilities = useCallback((facilities: Facility[]) => {
-    setState(prev => {
-      if (prev.customerType !== 'COMPANY') return prev;
-      return {
-        ...prev,
-        facilities,
-        facilityCount: facilities.length || prev.facilityCount,
-      };
-    });
+    dispatch({ type: 'SET_COMPANY_FACILITIES', facilities });
   }, []);
 
+  const value: FlowStateContextType = {
+    state,
+    isInitialized,
+    storageUnavailable,
+    setCustomerType,
+    startPrivateFlow,
+    selectProduct,
+    setAddress,
+    setAuthenticated,
+    setCustomerScenario,
+    setMoveChoice,
+    setCompareProfile,
+    setFacilityHandling,
+    setInvoice,
+    setCustomerDetails,
+    setElomrade,
+    resolvePriceConflict,
+    setConsents,
+    navigatePrivate,
+    setPrivateDetailsStep,
+    setDateDraft,
+    confirmDate,
+    setContactDraft,
+    completeSigning,
+    setPrivateStop,
+    setExtraServicesSelection,
+    resetState,
+    clearPersistedState,
+    setCompanyProduct,
+    setCompanyGatekeeper,
+    setCompanyLookupData,
+    setCompanyFacilities,
+  };
+
   return (
-    <FlowStateContext.Provider value={{ 
-      state, 
-      isInitialized, 
-      setCustomerType,
-      selectProduct, 
-      setAddress, 
-      setAuthenticated, 
-      setCustomerScenario,
-      setMoveChoice,
-      setCompareProfile,
-      setFacilityHandling,
-      setInvoice,
-      setCustomerDetails,
-      setElomrade,
-      resolvePriceConflict,
-      setConsents,
-      resetState,
-      setCompanyProduct,
-      setCompanyGatekeeper,
-      setCompanyLookupData,
-      setCompanyFacilities,
-    }}>
+    <FlowStateContext.Provider value={value}>
       {children}
     </FlowStateContext.Provider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useFlowState } from '@/hooks/useFlowState';
+import { useFlowState } from '@/context/FlowStateContext';
 import { getProductsForRegion } from '@/services/mockData';
 import { ProductCard } from './ProductCard';
 import { Button } from '@/components/ui/Button';
@@ -21,8 +21,10 @@ export const PriceConflictResolver = () => {
   // Find if the currently selected product exists in the new region
   const updatedProduct = allRegionalProducts.find(p => p.id === selectedProduct.id);
   
-  // Filter alternatives to only include non-discounted items (per user request)
-  const alternativeProducts = allRegionalProducts.filter(p => !p.isDiscounted);
+  // Keep customers in the same offer context when their original product is unavailable.
+  const alternativeProducts = allRegionalProducts.filter(
+    (product) => !!product.isDiscounted === !!selectedProduct.isDiscounted
+  );
 
   // Handle case: Product unavailable in new region
   if (!updatedProduct) {

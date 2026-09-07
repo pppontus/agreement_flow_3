@@ -5,8 +5,8 @@ import { Select } from '@/components/ui/Select';
 import { ContractAdvisor } from './ContractAdvisor';
 import { getProductsForRegion } from '@/services/mockData';
 import { useEffect, useState } from 'react';
-import { CompareProfileKwh, HousingType, Product } from '@/types';
-import { useFlowState } from '@/hooks/useFlowState';
+import { CompareProfileKwh, Elomrade, HousingType, Product } from '@/types';
+import { useFlowState } from '@/context/FlowStateContext';
 import {
   COMPARE_PRICE_PROFILES,
   CUSTOM_CONSUMPTION_MAX_KWH,
@@ -18,10 +18,14 @@ import {
 import styles from './ProductSelection.module.css';
 
 interface ProductSelectionProps {
-  onProductSelect?: (product: Product) => void;
+  onProductSelect?: (product: Product, region: Elomrade) => void;
+  onBack?: () => void;
   isCompany?: boolean;
   initialRegion?: string;
   hideRegionSelector?: boolean;
+  requireRegionSelection?: boolean;
+  visibleProductIds?: string[];
+  allowAdvisor?: boolean;
   title?: string;
   notice?: string;
   showGenericOptionSection?: boolean;
@@ -39,9 +43,13 @@ interface ProductSelectionProps {
 
 export const ProductSelection = ({ 
   onProductSelect, 
+  onBack,
   isCompany = false,
   initialRegion,
   hideRegionSelector = false,
+  requireRegionSelection = false,
+  visibleProductIds,
+  allowAdvisor = true,
   title = 'Välj elavtal',
   notice,
   showGenericOptionSection = true,
@@ -52,12 +60,11 @@ export const ProductSelection = ({
   
   // Safely get private state if applicable
   const privateState = rawState.customerType === 'PRIVATE' ? rawState : null;
-  const effectiveRegion = initialRegion || (typeof privateState?.elomrade === 'string' ? privateState.elomrade : 'SE3');
-  const hasSelectedAddress = hideRegionSelector || !!privateState?.valdAdress;
+  const effectiveRegion = initialRegion || (typeof privateState?.elomrade === 'string' ? privateState.elomrade : '');
+  const fallbackRegion = isCompany && !effectiveRegion ? 'SE3' : effectiveRegion;
 
-  const [region, setLocalRegion] = useState(effectiveRegion);
+  const [region, setLocalRegion] = useState(requireRegionSelection && !effectiveRegion ? '' : fallbackRegion);
   const [showAdvisor, setShowAdvisor] = useState(false);
-  const [showDiscounts, setShowDiscounts] = useState(false);
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(!!compareConfig?.customConsumptionKwh);
   const [customConsumptionInput, setCustomConsumptionInput] = useState(
     compareConfig?.customConsumptionKwh ? String(compareConfig.customConsumptionKwh) : ''
@@ -75,13 +82,23 @@ export const ProductSelection = ({
   }, [privateState?.elomrade, region]);
 
   // Pass isCompany to getProductsForRegion
-  const allProducts = getProductsForRegion(region, isCompany, true);
+  const hasRegion = region === 'SE1' || region === 'SE2' || region === 'SE3' || region === 'SE4';
+  const allProducts = hasRegion ? getProductsForRegion(region, isCompany, true) : [];
   const standardProducts = allProducts.filter(p => !p.isDiscounted);
-  const discountedProducts = allProducts.filter(p => p.isDiscounted);
-  
-  const displayedProducts = showDiscounts ? discountedProducts : standardProducts;
+  const configuredProducts = visibleProductIds
+    ? allProducts.filter((product) => visibleProductIds.includes(product.id))
+    : standardProducts;
   const isFastprisLikelyUnavailable = (product: Product) =>
     product.type === 'FAST' && (region === 'SE1' || region === 'SE2');
+  const configuredOfferUnavailable = !!visibleProductIds && configuredProducts.some(isFastprisLikelyUnavailable);
+  const offerIsDiscounted = configuredProducts.some((product) => product.isDiscounted);
+  const displayedProducts = configuredOfferUnavailable
+    ? allProducts.filter(
+        (product) =>
+          !!product.isDiscounted === offerIsDiscounted &&
+          !isFastprisLikelyUnavailable(product)
+      )
+    : configuredProducts;
   const selectedProfileId = compareConfig?.housingType || DEFAULT_COMPARE_PROFILE_ID;
   const selectedProfile =
     COMPARE_PRICE_PROFILES.find((profile) => profile.id === selectedProfileId) || COMPARE_PRICE_PROFILES[0];
@@ -104,8 +121,8 @@ export const ProductSelection = ({
   };
 
   const handleSelectProduct = (product: Product) => {
-    if (onProductSelect) {
-      onProductSelect(product);
+    if (onProductSelect && hasRegion) {
+      onProductSelect(product, region);
     }
   };
 
@@ -160,8 +177,8 @@ export const ProductSelection = ({
 
   const handleAdvisorSelect = (type: 'FAST' | 'RORLIGT' | 'KVARTS') => {
     const product = standardProducts.find(p => p.type === type);
-    if (product && onProductSelect) {
-      onProductSelect(product);
+    if (product && onProductSelect && hasRegion) {
+      onProductSelect(product, region);
     }
     setShowAdvisor(false);
   };
@@ -179,7 +196,7 @@ export const ProductSelection = ({
     <div className={styles.container}>
       <header className={styles.header}>
         <h2 className={styles.title}>{title}</h2>
-        {!hasSelectedAddress && (
+        {!hideRegionSelector && (
           <div className={styles.controls}>
             <Select 
               label="Elområde"
@@ -187,6 +204,7 @@ export const ProductSelection = ({
               onChange={handleRegionChange}
               id="region-select"
             >
+              {requireRegionSelection && <option value="">Välj elområde</option>}
               <option value="SE1">SE1 (Luleå)</option>
               <option value="SE2">SE2 (Sundsvall)</option>
               <option value="SE3">SE3 (Stockholm)</option>
@@ -196,7 +214,21 @@ export const ProductSelection = ({
         )}
       </header>
 
-      {showCompareControls && (
+      {hideRegionSelector && hasRegion && (
+        <p className={styles.regionContext}>Elområde {region}, utifrån den valda adressen.</p>
+      )}
+
+      {requireRegionSelection && !hasRegion && (
+        <p className={styles.regionPrompt}>Välj elområde för att se rätt pris på erbjudandet.</p>
+      )}
+
+      {configuredOfferUnavailable && (
+        <p className={styles.regionPrompt}>
+          Det förvalda avtalet finns inte i elområde {region}. Välj ett av alternativen nedan.
+        </p>
+      )}
+
+      {showCompareControls && hasRegion && (
         <section className={styles.compareSection}>
           <h3 className={styles.compareTitle}>Anpassa jämförpris</h3>
           <div className={styles.compareSentenceRow}>
@@ -299,7 +331,7 @@ export const ProductSelection = ({
       )}
 
       <div className={styles.optionsRow}>
-        {!isCompany && (
+        {!isCompany && allowAdvisor && !visibleProductIds && hasRegion && (
           <button 
             className={styles.advisorLink}
             onClick={() => setShowAdvisor(true)}
@@ -308,19 +340,6 @@ export const ProductSelection = ({
           </button>
         )}
 
-        {discountedProducts.length > 0 && (
-          <div className={styles.toggleWrapper}>
-            <span className={styles.toggleLabel}>Visa rabattavtal</span>
-            <label className={styles.switch}>
-              <input 
-                type="checkbox" 
-                checked={showDiscounts}
-                onChange={(e) => setShowDiscounts(e.target.checked)}
-              />
-              <span className={styles.slider}></span>
-            </label>
-          </div>
-        )}
       </div>
 
       <div className={styles.grid}>
@@ -341,7 +360,7 @@ export const ProductSelection = ({
         })}
       </div>
 
-      {!hasSelectedAddress && showGenericOptionSection && (
+      {!privateState?.valdAdress && showGenericOptionSection && hasRegion && (
         <section className={styles.unspecifiedSection}>
           <header className={styles.header} style={{ marginTop: 'var(--space-2xl)' }}>
             <h2 className={styles.title}>Osäker på avtalsform?</h2>
@@ -352,12 +371,25 @@ export const ProductSelection = ({
                 id: 'GENERIC',
                 name: 'Teckna elavtal',
                 type: 'RORLIGT',
-                description: 'Välj senare. Vi guidar dig utifrån adressen.'
+                description: 'Välj senare. Vi guidar dig utifrån adressen.',
+                contractTerms: { bindingMonths: null, noticeMonths: 1 },
               }} 
-              onSelect={() => handleSelectProduct({ id: 'GENERIC', name: 'Teckna elavtal', type: 'RORLIGT' } as Product)}
+              onSelect={() => handleSelectProduct({
+                id: 'GENERIC',
+                name: 'Teckna elavtal',
+                type: 'RORLIGT',
+                description: 'Välj senare. Vi guidar dig utifrån adressen.',
+                contractTerms: { bindingMonths: null, noticeMonths: 1 },
+              })}
             />
           </div>
         </section>
+      )}
+
+      {onBack && (
+        <button type="button" className={styles.backLink} onClick={onBack}>
+          ← Tillbaka
+        </button>
       )}
     </div>
   );

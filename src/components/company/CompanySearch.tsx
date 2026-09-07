@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { lookupCompany, CompanyLookupResult } from '@/services/companyService';
@@ -39,7 +38,7 @@ export const CompanySearch = ({ onCompanyFound, onBack }: CompanySearchProps) =>
     try {
       const result = await lookupCompany(orgNr);
       onCompanyFound(result);
-    } catch (err) {
+    } catch {
       setError('Vi kunde tyvärr inte hitta företaget. Kontrollera numret och försök igen.');
     } finally {
       setIsLoading(false);

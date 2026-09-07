@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { CONTACT_ME_SERVICE_IDS, ContactMeServiceId, ExtraServicesSelection } from '@/services/extraServicesService';
+import { CONTACT_ME_SERVICE_IDS } from '@/flow/privateFlow';
+import type { ContactInterestServiceId as ContactMeServiceId, ExtraServicesSelection } from '@/types';
 import styles from './ExtraOfferStep.module.css';
 
 interface ExtraOfferContactMeProps {
@@ -160,8 +161,12 @@ export const ExtraOfferContactMe = ({
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.actions}>
-        <Button onClick={() => submitSelection(selectedServices, true)} disabled={isSubmitting} fullWidth>
-          {isSubmitting ? 'Sparar...' : 'Spara och fortsätt'}
+        <Button
+          onClick={() => submitSelection(selectedServices, true)}
+          disabled={isSubmitting || selectedServices.length === 0}
+          fullWidth
+        >
+          {isSubmitting ? 'Sparar...' : 'Be om kontakt'}
         </Button>
         <Button variant="outline" onClick={() => submitSelection([], false)} disabled={isSubmitting} fullWidth>
           Hoppa över

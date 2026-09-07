@@ -1,35 +1,15 @@
-import { apiClient } from './apiClient';
-import { ContactInterestServiceId } from '@/types';
-
-export type ContactMeServiceId = ContactInterestServiceId;
-
-export const CONTACT_ME_SERVICE_IDS: ContactMeServiceId[] = [
-  'HOME_BATTERY',
-  'CHARGER',
-  'SOLAR',
-  'ATTIC_INSULATION',
-];
+import { loggedApiCall } from './apiClient';
+import type { ExtraServicesSelection } from '@/types';
 
 export const BIXIA_NARA_MONTHLY_SEK = 29;
 export const REALTIME_METER_ONE_TIME_SEK = 695;
 export const REALTIME_METER_MONTHLY_SEK = 19;
 
-export type ExtraServicesSelection = {
-  bixiaNara: {
-    selected: boolean;
-    county?: string;
-  };
-  realtimeMeter: {
-    selected: boolean;
-  };
-  contactMeServices: ContactMeServiceId[];
-};
-
 export const saveExtraServicesSelection = async (
   orderId: string,
   selection: ExtraServicesSelection
 ): Promise<{ ok: true }> => {
-  return apiClient.loggedApiCall(
+  return loggedApiCall(
     '/api/extra-services',
     'POST',
     { orderId, selection },

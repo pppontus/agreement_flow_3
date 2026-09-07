@@ -1,6 +1,6 @@
 import { Address, Invoice } from '@/types';
 import { loggedApiCall } from './apiClient';
-import { MockAddressResult } from '@/context/DevPanelContext';
+import type { MockAddressResult } from '@/types/dev';
 
 // Mock addresses for search simulation
 export const MOCK_ADDRESSES: Address[] = [
@@ -71,8 +71,7 @@ const doSearch = async (
 
 /**
  * Search for addresses - now with logging via apiClient.
- * Pass mockResult to override behavior when DevPanel is open.
- * Pass mockElomrade to force all results to a specific elområde.
+ * Pass mockResult to select a deterministic test result, independently of panel visibility.
  */
 export const searchAddresses = async (
   query: string, 

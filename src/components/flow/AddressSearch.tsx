@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Address } from '@/types';
-import { searchAddresses, formatAddress, fetchApartmentNumbers } from '@/services/addressService';
-import { useDevPanel } from '@/context/DevPanelContext';
+import { formatAddress } from '@/services/addressService';
+import { useMockSettings } from '@/context/MockSettingsContext';
+import {
+  useAddressLookup,
+  useApartmentNumbers,
+  useGroupedApartmentNumbers,
+} from '@/hooks/useAddressLookup';
 import styles from './AddressSearch.module.css';
 
 interface AddressSearchProps {
@@ -15,92 +20,43 @@ interface AddressSearchProps {
 }
 
 export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: AddressSearchProps) => {
-  const { state: devState } = useDevPanel();
+  const { state: devState } = useMockSettings();
   
   const [query, setQuery] = useState(suggestedAddress ? formatAddress(suggestedAddress) : '');
-  const [results, setResults] = useState<Address[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [showList, setShowList] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(suggestedAddress || null);
   
   // Apartment details
-  const [apartmentNumber, setApartmentNumber] = useState('');
-  const [apartmentList, setApartmentList] = useState<string[]>([]);
-  const [isAptsLoading, setIsAptsLoading] = useState(false);
+  const [apartmentNumber, setApartmentNumber] = useState(suggestedAddress?.apartmentNumber ?? '');
   const [aptError, setAptError] = useState('');
   const [showManualApt, setShowManualApt] = useState(false);
   
   // c/o details
   const [showCo, setShowCo] = useState(false);
   const [coValue, setCoValue] = useState('');
+  const addressLookup = useAddressLookup({
+    query,
+    selectedAddress,
+    mockResult: devState.mockAddressResult,
+  });
+  const apartmentLookup = useApartmentNumbers(selectedAddress);
+  const groupedApartmentNumbers = useGroupedApartmentNumbers(apartmentLookup.apartmentNumbers);
 
   const handleSelect = useCallback((addr: Address) => {
     setSelectedAddress(addr);
     setQuery(formatAddress(addr));
-    setShowList(false);
     // Reset or set pre-filled apt details
     setApartmentNumber(addr.apartmentNumber || '');
     setAptError('');
     setShowManualApt(false);
-    setApartmentList([]);
     // Reset c/o
     setShowCo(false);
     setCoValue('');
   }, []);
 
-  useEffect(() => {
-    const search = async () => {
-      // Don't search if we just selected an address (query matches selected)
-      if (selectedAddress && query === formatAddress(selectedAddress)) {
-        setResults([]);
-        setShowList(false);
-        return;
-      }
-
-      if (query.length < 2) {
-        setResults([]);
-        setHasSearched(false);
-        setShowList(false);
-        return;
-      }
-
-      setIsLoading(true);
-      // Pass mock overrides if DevPanel is open
-      const mockOverride = devState.isOpen ? devState.mockAddressResult : undefined;
-      const addresses = await searchAddresses(query, mockOverride);
-      setResults(addresses);
-      setIsLoading(false);
-      setHasSearched(true);
-      setShowList(true);
-    };
-
-    const debounce = setTimeout(search, 300);
-    return () => clearTimeout(debounce);
-  }, [query, selectedAddress, devState.isOpen, devState.mockAddressResult]);
-
-  // Load apartment list when a LGH address is selected
-  useEffect(() => {
-    if (selectedAddress?.type === 'LGH') {
-      const loadApts = async () => {
-        setIsAptsLoading(true);
-        try {
-          const apts = await fetchApartmentNumbers(selectedAddress);
-          setApartmentList(apts);
-        } catch (e) {
-          console.error("Failed to load apartments", e);
-        }
-        setIsAptsLoading(false);
-      };
-      loadApts();
-    }
-  }, [selectedAddress]);
-
   const handleInputChange = (val: string) => {
     setQuery(val);
     if (selectedAddress) {
       setSelectedAddress(null);
-      setApartmentList([]);
       setApartmentNumber('');
       setShowManualApt(false);
       setAptError('');
@@ -144,14 +100,14 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
         />
 
         <div className={styles.results}>
-          {isLoading && (
+          {addressLookup.isLoading && (
             <div className={styles.loading}>Söker...</div>
           )}
 
-          {!isLoading && showList && results.length > 0 && (
+          {!addressLookup.isLoading && addressLookup.showList && addressLookup.results.length > 0 && (
             <ul className={styles.list}>
-              {results.map((addr, index) => (
-                <li key={index}>
+              {addressLookup.results.map((addr) => (
+                <li key={`${addr.street}-${addr.number}-${addr.postalCode}-${addr.city}`}>
                   <button 
                     className={styles.resultItem}
                     onClick={() => handleSelect(addr)}
@@ -166,9 +122,9 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
             </ul>
           )}
 
-          {!isLoading && showList && hasSearched && results.length === 0 && (
+          {!addressLookup.isLoading && addressLookup.showList && addressLookup.hasSearched && addressLookup.results.length === 0 && (
             <div className={styles.noResults}>
-              {`Ingen adress hittades för "${query}"`}
+              {addressLookup.error || `Ingen adress hittades för "${query}"`}
             </div>
           )}
         </div>
@@ -208,22 +164,13 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
 
             <p className={styles.sectionLabel}>Välj lägenhetsnummer</p>
             
-            {isAptsLoading ? (
+            {apartmentLookup.isLoading ? (
               <div className={styles.aptLoading}>Hämtar lägenheter...</div>
             ) : (
               <div className={styles.apartmentGridContainer}>
-                {Object.entries(
-                  apartmentList.reduce((acc, num) => {
-                    const floorPart = num.substring(0, 2);
-                    if (!acc[floorPart]) acc[floorPart] = [];
-                    acc[floorPart].push(num);
-                    return acc;
-                  }, {} as Record<string, string[]>)
-                )
-                  .sort(([a], [b]) => b.localeCompare(a))
-                  .map(([floorPart, numbers]) => (
+                {groupedApartmentNumbers.map(([floorPart, numbers]) => (
                     <div key={floorPart} className={styles.floorRow}>
-                      {numbers.sort().map(num => (
+                      {numbers.map(num => (
                         <button
                           key={num}
                           className={`${styles.aptButton} ${apartmentNumber === num ? styles.aptButtonSelected : ''}`}
@@ -240,6 +187,10 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
               </div>
             )}
 
+            {apartmentLookup.hasError && (
+              <p className={styles.noResults}>Lägenhetsnummer kunde inte hämtas. Ange numret manuellt.</p>
+            )}
+
             {!showManualApt ? (
               <button 
                 className={styles.toggleManual}
@@ -254,7 +205,7 @@ export const AddressSearch = ({ onConfirmAddress, onBack, suggestedAddress }: Ad
                   placeholder="0001"
                   value={apartmentNumber}
                   onChange={(e) => {
-                    setApartmentNumber(e.target.value);
+                    setApartmentNumber(e.target.value.replace(/\D/g, '').slice(0, 4));
                     setAptError('');
                   }}
                   maxLength={4}

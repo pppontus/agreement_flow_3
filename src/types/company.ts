@@ -1,4 +1,4 @@
-import { Elomrade, Product } from './index';
+import type { Elomrade, Product } from './shared';
 
 export type CompanyScenario = 'NYTECKNING' | 'LEVERANTÖRSBYTE' | 'OMTECKNING';
 export type SignatoryType = 'SINGLE' | 'DUAL' | 'UNKNOWN';

@@ -1,6 +1,7 @@
 import { Address, ContactInterestServiceId, Scenario, ScenarioCustomer, StopReason } from '@/types';
 import { loggedApiCall } from './apiClient';
-import { MockScenarioType, MockMarketingConsentType, MockExistingExtrasType } from '@/context/DevPanelContext';
+import type { MockExistingExtrasType, MockMarketingConsentType, MockScenarioType } from '@/types/dev';
+import { toDateInputValue } from '@/utils/formatters';
 
 export interface ScenarioResponse {
   scenario: Scenario;
@@ -76,6 +77,7 @@ const doScenarioDetermination = async (
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
+  if (mockScenarioOverride === 'ERROR') throw new Error('Simulerat fel vid kunduppslag');
   const normalizedPnr = pnr.replace(/\D/g, '');
 
   // Determine which scenario to use
@@ -159,7 +161,7 @@ const doScenarioDetermination = async (
           folkbokforing: selectedAddress,
           facilityId: '735999222222222222',
           extraServices: getMockExistingExtras(mockExistingExtrasOverride),
-          contractEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 months binding
+          contractEndDate: toDateInputValue(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)), // 3 months binding
           marketingConsent: getMockMarketingConsent(mockMarketingConsentOverride),
         },
         currentContractAddress: selectedAddress

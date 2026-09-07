@@ -1,5 +1,7 @@
 # UI-spec: Jämförpris med fastighetstyp och egen förbrukning (MVP)
 
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
 Senast uppdaterad: 2026-02-23  
 Status: För godkännande (planeringsunderlag före implementation)
 

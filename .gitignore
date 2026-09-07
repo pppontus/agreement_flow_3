@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 Avtalsflöde (1).pdf
+# Local reports and presentation output
+/.audit/
+/.codex_tmp/
+/playwright-report/
+/test-results/
+/CRMK_avtalsflode_nulage_malbild.pptx*

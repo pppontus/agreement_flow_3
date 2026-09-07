@@ -1,5 +1,7 @@
 ## **Företagsflöde på webben (SME) Specifikation för att modifiera privatflödet**
 
+> Historiskt underlag. Aktuell etapp och status beskrivs i [arbetslistan](docs/work-plan.md). Befintliga krav och förslag behöver läsas i sitt sammanhang.
+
 ### **Scope**
 
 Målet är att återanvända privatflödet men göra en **SME-version** (små och medelstora företag) för bixia.se med dessa produkter:

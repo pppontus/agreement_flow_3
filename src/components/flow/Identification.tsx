@@ -1,34 +1,59 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IdMethod } from '@/types';
 import styles from './Identification.module.css';
 
 interface IdentificationProps {
-  onAuthenticated: (pnr: string, method: IdMethod) => void;
+  onAuthenticated: (pnr: string, method: IdMethod) => Promise<void>;
+  onCancelRequest: () => void;
   onBack: () => void;
   bankIdOnly?: boolean; // If true, hide manual PNR option (for security verification)
   securityMessage?: string; // Optional message to show why BankID is required
+  backLabel?: string;
 }
 
 type ViewState = 'METHOD_SELECT' | 'BANKID_PENDING' | 'MANUAL_PNR';
 
-export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMessage }: IdentificationProps) => {
+export const Identification = ({ onAuthenticated, onCancelRequest, onBack, bankIdOnly, securityMessage, backLabel = 'Tillbaka till adress' }: IdentificationProps) => {
   const [view, setView] = useState<ViewState>('METHOD_SELECT');
   const [pnr, setPnr] = useState('');
   const [pnrError, setPnrError] = useState('');
 
-  // Simulation: Move from BankID pending to authenticated after a delay
-  useEffect(() => {
-    if (view === 'BANKID_PENDING') {
-      const timer = setTimeout(() => {
-        onAuthenticated('19850101-1234', 'BANKID_MOBILE');
-      }, 3000);
-      return () => clearTimeout(timer);
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestError, setRequestError] = useState('');
+  const callbacks = useRef({ onAuthenticated, onCancelRequest });
+  useLayoutEffect(() => { callbacks.current = { onAuthenticated, onCancelRequest }; });
+  const request = useRef(0);
+  const retry = useRef<{ pnr: string; method: IdMethod } | null>(null);
+  useEffect(() => () => { request.current += 1; callbacks.current.onCancelRequest(); }, []);
+  const authenticate = useCallback(async (pnr: string, method: IdMethod) => {
+    const id = ++request.current;
+    retry.current = { pnr, method };
+    setRequestError(''); setIsLoading(true);
+    try {
+      await callbacks.current.onAuthenticated(pnr, method);
+      if (id === request.current) { setView('METHOD_SELECT'); setIsLoading(false); }
+    } catch {
+      if (id === request.current) {
+        setIsLoading(false);
+        setRequestError('Det gick inte att hämta dina uppgifter. Försök igen.');
+      }
     }
-  }, [view, onAuthenticated]);
+  }, []);
+  const cancel = () => {
+    request.current += 1;
+    callbacks.current.onCancelRequest();
+    setIsLoading(false); setRequestError(''); setView('METHOD_SELECT');
+    retry.current = null;
+  };
+  useEffect(() => {
+    if (view !== 'BANKID_PENDING') return;
+    const timer = setTimeout(() => { void authenticate('19850101-1234', 'BANKID_MOBILE'); }, 3000);
+    return () => clearTimeout(timer);
+  }, [view, authenticate]);
 
   const effectiveView: ViewState = bankIdOnly
     ? (view === 'BANKID_PENDING' ? 'BANKID_PENDING' : 'METHOD_SELECT')
@@ -42,7 +67,7 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
     if (normalized.length === 10 || normalized.length === 12) {
       // For display/logic consistency, we could transform 10 to 12 or just keep as is
       // Here we just accept it and pass it on
-      onAuthenticated(normalized, 'MANUAL_PNR');
+      void authenticate(normalized, 'MANUAL_PNR');
     } else {
       setPnrError('Personnummer måste vara 10 eller 12 siffror');
     }
@@ -58,6 +83,8 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
       </header>
 
       <div className={styles.content}>
+        {isLoading && <p role="status">Hämtar dina uppgifter…</p>}
+        {requestError && <div role="alert"><p>{requestError}</p><Button onClick={() => { if (retry.current) void authenticate(retry.current.pnr, retry.current.method); }}>Försök igen</Button></div>}
         {effectiveView === 'METHOD_SELECT' && (
           <div className={styles.methodSelect}>
             <div className={styles.stepsOverview}>
@@ -116,7 +143,7 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
               <div className={styles.smallSpinner}></div>
               <span>Väntar på BankID...</span>
             </div>
-            <Button variant="outline" onClick={() => setView('METHOD_SELECT')}>
+            <Button variant="outline" onClick={cancel}>
               Avbryt
             </Button>
           </div>
@@ -137,12 +164,12 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
               autoFocus
             />
             <div className={styles.actions}>
-              <Button onClick={handleManualSubmit} disabled={!pnr}>
+              <Button onClick={handleManualSubmit} disabled={!pnr || isLoading}>
                 Fortsätt
               </Button>
               <button 
                 className={styles.backLink}
-                onClick={() => setView('METHOD_SELECT')}
+                onClick={cancel}
               >
                 ← Tillbaka till val
               </button>
@@ -153,7 +180,7 @@ export const Identification = ({ onAuthenticated, onBack, bankIdOnly, securityMe
 
       {effectiveView === 'METHOD_SELECT' && (
         <button className={styles.globalBackLink} onClick={onBack}>
-          ← Tillbaka till adress
+          ← {backLabel}
         </button>
       )}
     </div>

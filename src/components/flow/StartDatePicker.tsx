@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Address, MoveChoice } from '@/types';
+import { Address, MoveChoice, DateSelection } from '@/types';
+import { addDaysToDateInput, formatSwedishDate, toDateInputValue } from '@/utils/formatters';
+import { isValidDateSelection } from '@/flow/validation';
 import styles from './StartDatePicker.module.css';
 
 interface StartDatePickerProps {
+  value: DateSelection | null;
+  onChange: (value: DateSelection) => void;
   onSelectDate: (date: string, mode: 'EARLIEST' | 'SPECIFIC') => void;
   onBack: () => void;
   address?: Address;
@@ -16,7 +19,8 @@ interface StartDatePickerProps {
   bindingEndDate?: string;
 }
 
-export const StartDatePicker = ({ 
+export const StartDatePicker = ({
+  value, onChange,
   onSelectDate, 
   onBack, 
   address, 
@@ -26,30 +30,31 @@ export const StartDatePicker = ({
   isExistingCustomer,
   bindingEndDate
 }: StartDatePickerProps) => {
-  const [mode, setMode] = useState<'EARLIEST' | 'SPECIFIC'>('EARLIEST');
-  const [specificDate, setSpecificDate] = useState('');
+  const mode = bindingEndDate ? 'EARLIEST' : value?.mode ?? 'EARLIEST';
+  const specificDate = value?.date ?? '';
+  const setMode = (mode: DateSelection['mode']) => onChange({ mode, date: specificDate });
+  const setSpecificDate = (date: string) => onChange({ mode, date });
 
   // Calculate "earliest" date (e.g., 14 days from now logic)
   // For prototype, we just mock it
   // Calculate "earliest" date
   const getEarliestDate = () => {
     if (bindingEndDate) {
-      const d = new Date(bindingEndDate);
-      d.setDate(d.getDate() + 1); // Start day after binding ends
-      return d.toISOString().split('T')[0];
+      return addDaysToDateInput(bindingEndDate, 1);
     }
     const d = new Date();
     d.setDate(d.getDate() + 14);
-    return d.toISOString().split('T')[0];
+    return toDateInputValue(d);
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = toDateInputValue(new Date());
   const earliest = getEarliestDate();
   const hasConfirmedNoBinding = isSwitching && isExistingCustomer && !bindingEndDate;
   const isMoveExisting = moveChoice === 'MOVE_EXISTING';
   const isNewOnNewAddress = moveChoice === 'NEW_ON_NEW_ADDRESS';
 
   const handleContinue = () => {
+    if (mode === 'SPECIFIC' && !isValidDateSelection({ mode, date: specificDate })) return;
     if (mode === 'EARLIEST') {
       onSelectDate(earliest, 'EARLIEST');
     } else {
@@ -111,10 +116,10 @@ export const StartDatePicker = ({
             </div>
             <div className={styles.textWrapper}>
               <span className={styles.choiceTitle}>
-                När bindningstiden går ut ({earliest})
+                När bindningstiden går ut ({formatSwedishDate(earliest)})
               </span>
               <span className={styles.choiceDesc}>
-                Du har bindningstid till {bindingEndDate}. Vi startar det nya avtalet dagen efter.
+                Ditt nuvarande avtal är bundet till {formatSwedishDate(bindingEndDate)}. Vi startar det nya avtalet dagen efter.
               </span>
             </div>
           </label>
@@ -138,9 +143,9 @@ export const StartDatePicker = ({
               <span className={styles.choiceDesc}>
                 {isSwitching 
                   ? hasConfirmedNoBinding
-                    ? `Vi påbörjar bytet så snart det är möjligt (ca ${earliest}).`
-                    : `Vi påbörjar bytet så snart det är möjligt (ca ${earliest}). Kontrollera bindningstiden hos ditt nuvarande elbolag.`
-                  : `Vi startar avtalet så snart det går (ca ${earliest}).`
+                    ? `Vi påbörjar bytet så snart det är möjligt (cirka ${formatSwedishDate(earliest)}).`
+                    : `Vi påbörjar bytet så snart det är möjligt (cirka ${formatSwedishDate(earliest)}). Kontrollera bindningstiden hos ditt nuvarande elbolag.`
+                  : `Vi startar avtalet så snart det går (cirka ${formatSwedishDate(earliest)}).`
                 }
               </span>
             </div>
