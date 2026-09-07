@@ -42,4 +42,4 @@ Playwright startar en egen lokal server på port 3100 och använder Chromium, mo
 
 Giltiga val och formulärutkast återställs efter omladdning i samma flik. Personnummer lagras inte. En pågående signering måste startas igen; en slutförd signering ger en beständig kvittens. Om lagring inte fungerar fortsätter flödet i minnet med en synlig upplysning.
 
-Devpanelen visas endast i utveckling, eller med `NEXT_PUBLIC_ENABLE_DEV_PANEL=true` i ett uttryckligt demobygge. Mockinställningarna är separerade från panelens synlighet.
+Devpanelen visas i utveckling och i prototypen på GitHub Pages, vars arbetsflöde sätter `NEXT_PUBLIC_ENABLE_DEV_PANEL=true`. Andra produktionsbyggen döljer panelen om flaggan inte sätts. Mockinställningarna är separerade från panelens synlighet.
